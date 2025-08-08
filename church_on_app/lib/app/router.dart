@@ -16,6 +16,9 @@ import '../features/admin/add_sermon_screen.dart';
 import '../features/admin/add_event_screen.dart';
 import '../common/providers/auth_providers.dart';
 import '../features/sermons/sermon_detail_screen.dart';
+import '../features/announcements/announcements_screen.dart';
+import '../features/news/news_screen.dart';
+import '../features/reports/reports_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -57,6 +60,9 @@ final router = GoRouter(
     GoRoute(path: '/connect/chat', builder: (c, s) => const _PlaceholderPage(title: 'Chat Rooms')),
     GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
     GoRoute(path: '/connect/prayers', builder: (c, s) => const _PlaceholderPage(title: 'Prayer Requests')),
+    GoRoute(path: '/announcements', builder: (c, s) => const AnnouncementsScreen()),
+    GoRoute(path: '/news', builder: (c, s) => const NewsScreen()),
+    GoRoute(path: '/reports', builder: (c, s) => const ReportsScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),

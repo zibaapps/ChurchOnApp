@@ -21,9 +21,16 @@ class HomeTab extends StatelessWidget {
           const SizedBox(height: 12),
           const _Section(title: 'Upcoming Events'),
           const SizedBox(height: 12),
+          const _Section(title: 'Announcements'),
+          const SizedBox(height: 12),
           const _Section(title: 'Church News'),
           const SizedBox(height: 12),
-          const _Section(title: 'Daily Scripture'),
+          ListTile(
+            leading: const Icon(Icons.description),
+            title: const Text('Church Reports'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/reports'),
+          ),
         ],
       ),
     );
