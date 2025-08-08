@@ -7,14 +7,15 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import 'app/app.dart';
 import 'common/providers/firebase_flag.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   bool firebaseInitialized = false;
   try {
-    // Attempt to initialize Firebase with default options. Replace with FlutterFire options later.
-    await Firebase.initializeApp();
+    // Initialize Firebase with provided options (web) or default (mobile when added)
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     firebaseInitialized = true;
 
     FlutterError.onError = (FlutterErrorDetails details) {
