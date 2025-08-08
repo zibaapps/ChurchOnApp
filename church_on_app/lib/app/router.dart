@@ -30,6 +30,8 @@ import '../features/tour/app_tour_screen.dart';
 import '../common/providers/auth_providers.dart';
 import '../features/sermons/sermon_detail_screen.dart';
 import '../features/announcements/announcements_screen.dart';
+import '../features/chat/chat_list_screen.dart';
+import '../features/chat/chat_room_screen.dart';
 import '../features/news/news_screen.dart';
 import '../features/reports/reports_screen.dart';
 
@@ -83,7 +85,8 @@ final router = GoRouter(
     GoRoute(path: '/tour', builder: (c, s) => const AppTourScreen()),
     GoRoute(path: '/admin/memberships', builder: (c, s) => const MembershipAdminScreen()),
     GoRoute(path: '/admin/add-invite', builder: (c, s) => const AddInviteScreen()),
-    GoRoute(path: '/connect/chat', builder: (c, s) => const _PlaceholderPage(title: 'Chat Rooms')),
+    GoRoute(path: '/connect/chat', builder: (c, s) => const ChatListScreen()),
+    GoRoute(path: '/chat/:id', builder: (c, s) => ChatRoomScreen(threadId: s.pathParameters['id']!)),
     GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
     GoRoute(path: '/connect/prayers', builder: (c, s) => const _PlaceholderPage(title: 'Prayer Requests')),
     GoRoute(path: '/announcements', builder: (c, s) => const AnnouncementsScreen()),
