@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'router.dart';
-import 'theme.dart';
+import '../common/providers/theme_providers.dart';
 
-class ChurchOnApp extends StatelessWidget {
+class ChurchOnApp extends ConsumerWidget {
   const ChurchOnApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'Church On App',
       debugShowCheckedModeBanner: false,
