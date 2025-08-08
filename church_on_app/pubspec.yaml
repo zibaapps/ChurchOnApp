@@ -89,6 +89,9 @@ dependencies:
   logger: ^2.3.0
   # collection dependency removed to avoid conflict with flutter_test pin
 
+  # CSV export
+  csv: ^5.0.2
+
   # Web AR viewer for models on web
   model_viewer_plus: ^1.9.0
 

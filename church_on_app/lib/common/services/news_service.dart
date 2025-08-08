@@ -12,6 +12,7 @@ class NewsService {
         .collection('churches')
         .doc(churchId)
         .collection('news')
+        .where('status', isEqualTo: PublishStatus.published.name)
         .orderBy('publishedAt', descending: true)
         .limit(limit)
         .snapshots()

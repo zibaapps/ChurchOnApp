@@ -12,6 +12,7 @@ class AnnouncementService {
         .collection('churches')
         .doc(churchId)
         .collection('announcements')
+        .where('status', isEqualTo: PublishStatus.published.name)
         .orderBy('publishedAt', descending: true)
         .limit(limit)
         .snapshots()
