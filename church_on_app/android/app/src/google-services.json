@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "390897506707",
+    "project_id": "church-on-app",
+    "storage_bucket": "church-on-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390897506707:android:e880fd7edf3d1decf07066",
+        "android_client_info": {
+          "package_name": "com.churchonapp.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "390897506707-468pq4q516ce4dn0hmf9e2167b60ghmi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.churchonapp.app",
+            "certificate_hash": "ebdddd62855edac0f64d5cdce15e002f31de551b"
+          }
+        },
+        {
+          "client_id": "390897506707-inaj31sgo1qhovkqk85eegi9qk1np8m7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.churchonapp.app",
+            "certificate_hash": "70ea414029d63ef866b6c09ff335959673153371"
+          }
+        },
+        {
+          "client_id": "390897506707-dil611p7e4gh2nqd3n7r4bt02lh6ooat.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUf_A8PYFynOxKTK4A6bp69F-9VmqfJcA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "390897506707-dil611p7e4gh2nqd3n7r4bt02lh6ooat.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "390897506707-cqnchff5lhilrlbesi70mc520sa21dhr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.churchonapp.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
