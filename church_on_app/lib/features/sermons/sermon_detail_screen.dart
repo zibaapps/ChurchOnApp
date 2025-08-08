@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../common/models/sermon.dart';
 import '../../common/services/sermons_service.dart';
+import '../../common/widgets/web_iframe.dart';
 
 class SermonDetailScreen extends StatefulWidget {
   const SermonDetailScreen({super.key, required this.churchId, required this.sermonId});
@@ -52,10 +53,15 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
           SermonsService().incrementView(widget.churchId, widget.sermonId).catchError((_) {});
 
           if (sermon.isLive && sermon.liveUrl != null) {
-            return Center(
-              child: FilledButton(
-                onPressed: () => launchUrl(Uri.parse(sermon.liveUrl!), mode: LaunchMode.externalApplication),
-                child: const Text('Open Live Stream'),
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Live Stream'),
+                  const SizedBox(height: 8),
+                  WebIFrame(url: sermon.liveUrl!, height: 360),
+                ],
               ),
             );
           }
