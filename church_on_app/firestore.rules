@@ -5,6 +5,9 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superAdmin'];
     }
+    function isMemberOf(churchId) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)/memberships/$(churchId));
+    }
     function userChurchId(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data.churchId;
     }

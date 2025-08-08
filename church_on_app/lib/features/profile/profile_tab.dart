@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../common/providers/auth_providers.dart';
+import '../../common/providers/tenant_providers.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -13,6 +14,8 @@ class ProfileTab extends ConsumerWidget {
     final userAsync = ref.watch(currentUserStreamProvider);
     final isAdmin = ref.watch(isAdminProvider);
     final isSuper = ref.watch(isSuperAdminProvider);
+    final memberships = ref.watch(membershipsProvider).valueOrNull ?? const [];
+    final activeChurchId = ref.watch(activeChurchIdProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -41,17 +44,19 @@ class ProfileTab extends ConsumerWidget {
                       children: [
                         Text(user.displayName ?? 'User', style: Theme.of(context).textTheme.titleMedium),
                         Text(user.email ?? 'No email'),
-                        Text('Role: ${user.role.name}')
                       ],
                     )
                   ],
                 ),
-                const SizedBox(height: 16),
-                ListTile(
-                  leading: const Icon(Icons.church),
-                  title: Text(user.churchId == null ? 'No church selected' : 'Church: ${user.churchId}'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/onboarding/church'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: activeChurchId,
+                  items: [
+                    for (final m in memberships)
+                      DropdownMenuItem(value: m.churchId, child: Text(m.churchId))
+                  ],
+                  onChanged: (v) => ref.read(activeChurchIdProvider.notifier).state = v,
+                  decoration: const InputDecoration(labelText: 'Active Church'),
                 ),
                 const Divider(),
                 if (isAdmin) ...[
@@ -60,12 +65,6 @@ class ProfileTab extends ConsumerWidget {
                     title: const Text('Admin Panel'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/admin'),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.receipt_long),
-                    title: const Text('Billing'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/admin/billing'),
                   ),
                 ],
                 if (isSuper)
