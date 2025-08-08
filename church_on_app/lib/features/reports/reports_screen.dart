@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'dart:html' as html;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:csv/csv.dart';
 
 import '../../common/models/report.dart';
 import '../../common/providers/reports_providers.dart';
+import '../../common/web/export_csv.dart' if (dart.library.html) '../../common/web/export_csv_web.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -47,15 +46,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
     ];
     final csv = const ListToCsvConverter().convert(rows);
     final bytes = utf8.encode(csv);
-    final blob = html.Blob([bytes], 'text/csv');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.document.createElement('a') as html.AnchorElement
-      ..href = url
-      ..download = 'reports.csv';
-    html.document.body!.append(anchor);
-    anchor.click();
-    anchor.remove();
-    html.Url.revokeObjectUrl(url);
+    exportCsv('reports.csv', bytes);
   }
 
   @override
