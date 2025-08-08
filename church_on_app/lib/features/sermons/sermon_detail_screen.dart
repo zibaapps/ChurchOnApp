@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../common/models/sermon.dart';
+import '../../common/services/sermons_service.dart';
 
 class SermonDetailScreen extends StatefulWidget {
   const SermonDetailScreen({super.key, required this.churchId, required this.sermonId});
@@ -46,6 +47,8 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
           final data = snapshot.data!.data();
           if (data == null) return const Center(child: Text('Not found'));
           final sermon = Sermon.fromDoc(snapshot.data!.id, data);
+          // Increment view count best-effort
+          SermonsService().incrementView(widget.churchId, widget.sermonId).catchError((_) {});
           if (sermon.mediaType == 'video') {
             if (_videoController == null) {
               _initVideo(sermon.mediaUrl);

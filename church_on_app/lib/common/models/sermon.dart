@@ -20,6 +20,7 @@ class Sermon extends Equatable {
     this.livePlatform,
     this.liveUrl,
     this.scheduledAt,
+    this.viewCount = 0,
   });
 
   final String id;
@@ -38,6 +39,7 @@ class Sermon extends Equatable {
   final LivePlatform? livePlatform;
   final String? liveUrl;
   final DateTime? scheduledAt;
+  final int viewCount;
 
   Sermon copyWith({
     String? id,
@@ -56,6 +58,7 @@ class Sermon extends Equatable {
     LivePlatform? livePlatform,
     String? liveUrl,
     DateTime? scheduledAt,
+    int? viewCount,
   }) {
     return Sermon(
       id: id ?? this.id,
@@ -74,6 +77,7 @@ class Sermon extends Equatable {
       livePlatform: livePlatform ?? this.livePlatform,
       liveUrl: liveUrl ?? this.liveUrl,
       scheduledAt: scheduledAt ?? this.scheduledAt,
+      viewCount: viewCount ?? this.viewCount,
     );
   }
 
@@ -94,6 +98,7 @@ class Sermon extends Equatable {
       'livePlatform': livePlatform?.name,
       'liveUrl': liveUrl,
       'scheduledAt': scheduledAt?.toUtc().toIso8601String(),
+      'viewCount': viewCount,
     };
   }
 
@@ -122,9 +127,10 @@ class Sermon extends Equatable {
       scheduledAt: (map['scheduledAt'] as String?) != null
           ? DateTime.tryParse(map['scheduledAt'] as String)?.toLocal()
           : null,
+      viewCount: (map['viewCount'] as num?)?.toInt() ?? 0,
     );
   }
 
   @override
-  List<Object?> get props => [id, churchId, title, mediaType, mediaUrl, publishedAt, isFeatured, isLive, livePlatform, liveUrl];
+  List<Object?> get props => [id, churchId, title, mediaType, mediaUrl, publishedAt, isFeatured, isLive, livePlatform, liveUrl, viewCount];
 }

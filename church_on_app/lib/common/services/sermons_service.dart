@@ -25,4 +25,9 @@ class SermonsService {
         .collection('sermons')
         .add(sermon.toMap());
   }
+
+  Future<void> incrementView(String churchId, String sermonId) async {
+    final ref = _firestore.collection('churches').doc(churchId).collection('sermons').doc(sermonId);
+    await ref.update({'viewCount': FieldValue.increment(1)});
+  }
 }
