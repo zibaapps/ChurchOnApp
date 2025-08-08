@@ -19,7 +19,23 @@ class AnnouncementService {
         .map((s) => s.docs.map((d) => Announcement.fromDoc(d.id, d.data())).toList());
   }
 
+  // Admin stream (includes drafts)
+  Stream<List<Announcement>> streamAllForAdmin(String churchId, {int limit = 100}) {
+    return _firestore
+        .collection('churches')
+        .doc(churchId)
+        .collection('announcements')
+        .orderBy('publishedAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((s) => s.docs.map((d) => Announcement.fromDoc(d.id, d.data())).toList());
+  }
+
   Future<void> addAnnouncement(String churchId, Announcement a) async {
     await _firestore.collection('churches').doc(churchId).collection('announcements').add(a.toMap());
+  }
+
+  Future<void> updateStatus(String churchId, String id, PublishStatus status) async {
+    await _firestore.collection('churches').doc(churchId).collection('announcements').doc(id).update({'status': status.name});
   }
 }

@@ -6,10 +6,6 @@ class AdminPanelScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <String>[
-      'Users', 'Sermons', 'Testimonies', 'Prayer Requests',
-      'Announcements', 'Events', 'QR Check-in'
-    ];
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Panel')),
       body: ListView(
@@ -25,6 +21,24 @@ class AdminPanelScreen extends StatelessWidget {
             onPressed: () => context.push('/admin/add-event'),
             icon: const Icon(Icons.event_available),
             label: const Text('Add Event'),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () => context.push('/admin/add-announcement'),
+            icon: const Icon(Icons.campaign),
+            label: const Text('Add Announcement'),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () => context.push('/admin/add-news'),
+            icon: const Icon(Icons.newspaper),
+            label: const Text('Add News'),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () => context.push('/admin/add-report'),
+            icon: const Icon(Icons.description),
+            label: const Text('Add Report'),
           ),
           const SizedBox(height: 16),
           ListTile(
