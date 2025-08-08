@@ -2,24 +2,39 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SplashScreen extends StatefulWidget {
+import '../../common/providers/auth_providers.dart';
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   Timer? _navTimer;
+
+  void _decideNavigation() {
+    final auth = ref.read(currentUserStreamProvider);
+    final user = auth.valueOrNull;
+    if (user == null) {
+      context.go('/onboarding');
+      return;
+    }
+    if (user.churchId == null) {
+      context.go('/onboarding/church');
+      return;
+    }
+    context.go('/home');
+  }
 
   @override
   void initState() {
     super.initState();
-    _navTimer = Timer(const Duration(milliseconds: 900), () {
-      if (!mounted) return;
-      context.go('/home');
-    });
+    // Wait briefly to show branding, then decide route
+    _navTimer = Timer(const Duration(milliseconds: 600), () => _decideNavigation());
   }
 
   @override
@@ -35,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: AnimatedOpacity(
           opacity: 1,
-          duration: const Duration(milliseconds: 700),
+          duration: const Duration(milliseconds: 400),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
