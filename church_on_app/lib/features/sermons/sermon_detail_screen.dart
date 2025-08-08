@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../common/models/sermon.dart';
 import '../../common/services/sermons_service.dart';
@@ -49,6 +50,15 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
           final sermon = Sermon.fromDoc(snapshot.data!.id, data);
           // Increment view count best-effort
           SermonsService().incrementView(widget.churchId, widget.sermonId).catchError((_) {});
+
+          if (sermon.isLive && sermon.liveUrl != null) {
+            return Center(
+              child: FilledButton(
+                onPressed: () => launchUrl(Uri.parse(sermon.liveUrl!), mode: LaunchMode.externalApplication),
+                child: const Text('Open Live Stream'),
+              ),
+            );
+          }
           if (sermon.mediaType == 'video') {
             if (_videoController == null) {
               _initVideo(sermon.mediaUrl);

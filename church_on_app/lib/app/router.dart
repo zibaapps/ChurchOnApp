@@ -20,6 +20,12 @@ import '../features/admin/add_report_screen.dart';
 import '../features/admin/tenant_settings_screen.dart';
 import '../features/invites/invite_list_screen.dart';
 import '../features/admin/add_invite_screen.dart';
+import '../features/interchurch/interchurch_events_screen.dart';
+import '../features/interchurch/interchurch_projects_screen.dart';
+import '../features/programs/year_program_screen.dart';
+import '../features/moderation/moderation_screen.dart';
+import '../features/payments/payment_screen.dart';
+import '../features/memberships/membership_admin_screen.dart';
 import '../common/providers/auth_providers.dart';
 import '../features/sermons/sermon_detail_screen.dart';
 import '../features/announcements/announcements_screen.dart';
@@ -68,6 +74,12 @@ final router = GoRouter(
     GoRoute(path: '/admin/add-report', builder: (c, s) => const AddReportScreen()),
     GoRoute(path: '/admin/tenant-settings', builder: (c, s) => const TenantSettingsScreen()),
     GoRoute(path: '/invites', builder: (c, s) => const InviteListScreen()),
+    GoRoute(path: '/interchurch/events', builder: (c, s) => const InterchurchEventsScreen()),
+    GoRoute(path: '/interchurch/projects', builder: (c, s) => const InterchurchProjectsScreen()),
+    GoRoute(path: '/programs/year', builder: (c, s) => const YearProgramScreen()),
+    GoRoute(path: '/moderation', builder: (c, s) => const ModerationScreen()),
+    GoRoute(path: '/payments', builder: (c, s) => const PaymentScreen()),
+    GoRoute(path: '/admin/memberships', builder: (c, s) => const MembershipAdminScreen()),
     GoRoute(path: '/admin/add-invite', builder: (c, s) => const AddInviteScreen()),
     GoRoute(path: '/connect/chat', builder: (c, s) => const _PlaceholderPage(title: 'Chat Rooms')),
     GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
