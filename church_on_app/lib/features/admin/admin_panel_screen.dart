@@ -27,7 +27,24 @@ class AdminPanelScreen extends StatelessWidget {
             label: const Text('Add Event'),
           ),
           const SizedBox(height: 16),
-          ...items.map((t) => Card(child: ListTile(title: Text(t), trailing: const Icon(Icons.chevron_right)))).toList(),
+          ListTile(
+            leading: const Icon(Icons.campaign),
+            title: const Text('Announcements'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/announcements'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.newspaper),
+            title: const Text('News'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/news'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.description),
+            title: const Text('Reports'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/reports'),
+          ),
         ],
       ),
     );

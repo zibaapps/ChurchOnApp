@@ -14,6 +14,9 @@ import '../features/admin/billing_panel_screen.dart';
 import '../features/admin/super_admin_screen.dart';
 import '../features/admin/add_sermon_screen.dart';
 import '../features/admin/add_event_screen.dart';
+import '../features/admin/add_announcement_screen.dart';
+import '../features/admin/add_news_screen.dart';
+import '../features/admin/add_report_screen.dart';
 import '../common/providers/auth_providers.dart';
 import '../features/sermons/sermon_detail_screen.dart';
 import '../features/announcements/announcements_screen.dart';
@@ -57,6 +60,9 @@ final router = GoRouter(
     GoRoute(path: '/superadmin', builder: (c, s) => const SuperAdminScreen()),
     GoRoute(path: '/admin/add-sermon', builder: (c, s) => const AddSermonScreen()),
     GoRoute(path: '/admin/add-event', builder: (c, s) => const AddEventScreen()),
+    GoRoute(path: '/admin/add-announcement', builder: (c, s) => const AddAnnouncementScreen()),
+    GoRoute(path: '/admin/add-news', builder: (c, s) => const AddNewsScreen()),
+    GoRoute(path: '/admin/add-report', builder: (c, s) => const AddReportScreen()),
     GoRoute(path: '/connect/chat', builder: (c, s) => const _PlaceholderPage(title: 'Chat Rooms')),
     GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
     GoRoute(path: '/connect/prayers', builder: (c, s) => const _PlaceholderPage(title: 'Prayer Requests')),

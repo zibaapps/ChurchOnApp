@@ -8,6 +8,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'app/app.dart';
 import 'common/providers/firebase_flag.dart';
 import 'firebase_options.dart';
+import 'common/providers/app_init_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +36,7 @@ Future<void> main() async {
       overrides: [
         firebaseInitializedProvider.overrideWithValue(firebaseInitialized),
       ],
-      child: const ChurchOnApp(),
+      child: const _AppWithInit(),
     ));
   }, (error, stack) {
     // Best-effort Crashlytics reporting
@@ -43,4 +44,13 @@ Future<void> main() async {
       FirebaseCrashlytics.instance.recordError(error, stack);
     } catch (_) {}
   });
+}
+
+class _AppWithInit extends ConsumerWidget {
+  const _AppWithInit();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appInitProvider);
+    return const ChurchOnApp();
+  }
 }
