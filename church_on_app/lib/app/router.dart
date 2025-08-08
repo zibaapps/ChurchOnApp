@@ -26,6 +26,7 @@ import '../features/programs/year_program_screen.dart';
 import '../features/moderation/moderation_screen.dart';
 import '../features/payments/payment_screen.dart';
 import '../features/memberships/membership_admin_screen.dart';
+import '../features/tour/app_tour_screen.dart';
 import '../common/providers/auth_providers.dart';
 import '../features/sermons/sermon_detail_screen.dart';
 import '../features/announcements/announcements_screen.dart';
@@ -79,6 +80,7 @@ final router = GoRouter(
     GoRoute(path: '/programs/year', builder: (c, s) => const YearProgramScreen()),
     GoRoute(path: '/moderation', builder: (c, s) => const ModerationScreen()),
     GoRoute(path: '/payments', builder: (c, s) => const PaymentScreen()),
+    GoRoute(path: '/tour', builder: (c, s) => const AppTourScreen()),
     GoRoute(path: '/admin/memberships', builder: (c, s) => const MembershipAdminScreen()),
     GoRoute(path: '/admin/add-invite', builder: (c, s) => const AddInviteScreen()),
     GoRoute(path: '/connect/chat', builder: (c, s) => const _PlaceholderPage(title: 'Chat Rooms')),

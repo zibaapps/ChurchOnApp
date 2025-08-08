@@ -57,6 +57,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               Icon(Icons.church, size: 96, color: color),
               const SizedBox(height: 16),
               Text('Church On App', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 24),
+              OutlinedButton(
+                onPressed: () => context.push('/tour'),
+                child: const Text('Preview App'),
+              ),
             ],
           ),
         ),
