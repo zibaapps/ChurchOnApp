@@ -37,8 +37,31 @@ class ChatService {
   Future<void> sendMessage(String churchId, String threadId, ChatMessage msg) async {
     final ref = _firestore.collection('churches').doc(churchId).collection('threads').doc(threadId);
     await _firestore.runTransaction((txn) async {
-      await txn.set(ref.collection('messages').doc(), msg.toMap());
-      await txn.update(ref, {'lastMessage': msg.text, 'updatedAt': msg.sentAt.toUtc().toIso8601String()});
+      txn.set(ref.collection('messages').doc(), msg.toMap());
+      txn.update(ref, {'lastMessage': msg.text, 'updatedAt': msg.sentAt.toUtc().toIso8601String()});
+    });
+  }
+
+  Future<void> toggleReaction({
+    required String churchId,
+    required String threadId,
+    required String messageId,
+    required String emoji,
+    required String uid,
+  }) async {
+    final ref = _firestore.collection('churches').doc(churchId).collection('threads').doc(threadId).collection('messages').doc(messageId);
+    await _firestore.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      final data = snap.data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      final reactions = Map<String, dynamic>.from(data['reactions'] as Map? ?? {});
+      final list = (reactions[emoji] as List?)?.cast<String>() ?? <String>[];
+      if (list.contains(uid)) {
+        list.remove(uid);
+      } else {
+        list.add(uid);
+      }
+      reactions[emoji] = list;
+      txn.update(ref, {'reactions': reactions});
     });
   }
 }

@@ -39,17 +39,29 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                   itemBuilder: (context, i) {
                     final m = items[i];
                     final isMe = m.senderUid == user.uid;
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isMe ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceVariant,
-                          borderRadius: BorderRadius.circular(12),
+                    return Column(
+                      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isMe ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(m.text),
+                          ),
                         ),
-                        child: Text(m.text),
-                      ),
+                        _ReactionRow(
+                          messageId: m.id,
+                          currentUid: user.uid,
+                          churchId: churchId,
+                          threadId: widget.threadId,
+                          reactions: m.reactions,
+                        ),
+                      ],
                     );
                   },
                 );
@@ -80,6 +92,60 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           )
         ],
       ),
+    );
+  }
+}
+
+class _ReactionRow extends StatelessWidget {
+  const _ReactionRow({
+    required this.messageId,
+    required this.currentUid,
+    required this.churchId,
+    required this.threadId,
+    required this.reactions,
+  });
+
+  final String messageId;
+  final String currentUid;
+  final String churchId;
+  final String threadId;
+  final Map<String, List<String>> reactions;
+
+  static const List<String> emojis = ['🙏', '🙌', '🎶', '❤️', '🔥', '🕊️'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final e in emojis)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: InkWell(
+              onTap: () => ChatService().toggleReaction(
+                churchId: churchId,
+                threadId: threadId,
+                messageId: messageId,
+                emoji: e,
+                uid: currentUid,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(e),
+                    const SizedBox(width: 4),
+                    Text('${(reactions[e] ?? const <String>[]).length}')
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

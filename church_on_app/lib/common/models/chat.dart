@@ -48,26 +48,38 @@ class ChatMessage extends Equatable {
     required this.senderUid,
     required this.text,
     required this.sentAt,
+    this.reactions = const <String, List<String>>{},
   });
 
   final String id;
   final String senderUid;
   final String text;
   final DateTime sentAt;
+  final Map<String, List<String>> reactions; // emoji -> list of userIds
 
   Map<String, dynamic> toMap() => {
         'senderUid': senderUid,
         'text': text,
         'sentAt': sentAt.toUtc().toIso8601String(),
+        'reactions': reactions,
       };
 
-  factory ChatMessage.fromDoc(String id, Map<String, dynamic> map) => ChatMessage(
-        id: id,
-        senderUid: map['senderUid'] as String,
-        text: map['text'] as String,
-        sentAt: DateTime.tryParse(map['sentAt'] as String? ?? '')?.toLocal() ?? DateTime.now(),
-      );
+  factory ChatMessage.fromDoc(String id, Map<String, dynamic> map) {
+    final raw = (map['reactions'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+    final parsed = <String, List<String>>{};
+    raw.forEach((k, v) {
+      final list = (v as List?)?.cast<String>() ?? const <String>[];
+      parsed[k] = list;
+    });
+    return ChatMessage(
+      id: id,
+      senderUid: map['senderUid'] as String,
+      text: map['text'] as String,
+      sentAt: DateTime.tryParse(map['sentAt'] as String? ?? '')?.toLocal() ?? DateTime.now(),
+      reactions: parsed,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, senderUid, text, sentAt];
+  List<Object?> get props => [id, senderUid, text, sentAt, reactions];
 }
