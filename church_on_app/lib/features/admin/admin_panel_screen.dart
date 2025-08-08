@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminPanelScreen extends StatelessWidget {
   const AdminPanelScreen({super.key});
@@ -11,16 +12,23 @@ class AdminPanelScreen extends StatelessWidget {
     ];
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Panel')),
-      body: ListView.separated(
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, index) => Card(
-          child: ListTile(
-            title: Text(items[index]),
-            trailing: const Icon(Icons.chevron_right),
+        children: [
+          FilledButton.icon(
+            onPressed: () => context.push('/admin/add-sermon'),
+            icon: const Icon(Icons.library_add),
+            label: const Text('Add Sermon'),
           ),
-        ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () => context.push('/admin/add-event'),
+            icon: const Icon(Icons.event_available),
+            label: const Text('Add Event'),
+          ),
+          const SizedBox(height: 16),
+          ...items.map((t) => Card(child: ListTile(title: Text(t), trailing: const Icon(Icons.chevron_right)))).toList(),
+        ],
       ),
     );
   }

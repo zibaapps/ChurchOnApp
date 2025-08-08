@@ -201,14 +201,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
-  chewie:
-    dependency: "direct main"
-    description:
-      name: chewie
-      sha256: d8908907084d28533fbabe4a8b7112b63caa907506e5163fe2d10a5fa7cbf3ee
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.8.7"
   clock:
     dependency: transitive
     description:
@@ -853,14 +845,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.0"
-  nested:
-    dependency: transitive
-    description:
-      name: nested
-      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   nm:
     dependency: transitive
     description:
@@ -1045,14 +1029,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.1"
-  provider:
-    dependency: transitive
-    description:
-      name: provider
-      sha256: "4abbd070a04e9ddc287673bf5a030c7ca8b685ff70218720abab8b092f53dd84"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.5"
   pub_semver:
     dependency: transitive
     description:
@@ -1467,7 +1443,7 @@ packages:
     source: hosted
     version: "14.2.1"
   wakelock_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: wakelock_plus
       sha256: "775c50f226ab43ff859b479acc73f11c0744bf345a782e83355c4d25df758803"
