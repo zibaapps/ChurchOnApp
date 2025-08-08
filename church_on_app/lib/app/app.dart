@@ -13,8 +13,8 @@ class ChurchOnApp extends StatelessWidget {
       title: 'Church On App',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
-      theme: buildLightTheme(),
-      darkTheme: buildDarkTheme(),
+      theme: ref.watch(tenantThemeProvider),
+      darkTheme: ref.watch(tenantDarkThemeProvider),
       routerConfig: router,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
