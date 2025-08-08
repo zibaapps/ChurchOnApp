@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+enum LivePlatform { youtube, facebook, googleMeet, other }
+
 class Sermon extends Equatable {
   const Sermon({
     required this.id,
@@ -14,6 +16,10 @@ class Sermon extends Equatable {
     this.durationSec,
     this.isFeatured = false,
     this.downloadAllowed = false,
+    this.isLive = false,
+    this.livePlatform,
+    this.liveUrl,
+    this.scheduledAt,
   });
 
   final String id;
@@ -28,6 +34,10 @@ class Sermon extends Equatable {
   final int? durationSec;
   final bool isFeatured;
   final bool downloadAllowed;
+  final bool isLive;
+  final LivePlatform? livePlatform;
+  final String? liveUrl;
+  final DateTime? scheduledAt;
 
   Sermon copyWith({
     String? id,
@@ -42,6 +52,10 @@ class Sermon extends Equatable {
     int? durationSec,
     bool? isFeatured,
     bool? downloadAllowed,
+    bool? isLive,
+    LivePlatform? livePlatform,
+    String? liveUrl,
+    DateTime? scheduledAt,
   }) {
     return Sermon(
       id: id ?? this.id,
@@ -56,6 +70,10 @@ class Sermon extends Equatable {
       durationSec: durationSec ?? this.durationSec,
       isFeatured: isFeatured ?? this.isFeatured,
       downloadAllowed: downloadAllowed ?? this.downloadAllowed,
+      isLive: isLive ?? this.isLive,
+      livePlatform: livePlatform ?? this.livePlatform,
+      liveUrl: liveUrl ?? this.liveUrl,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
     );
   }
 
@@ -72,6 +90,10 @@ class Sermon extends Equatable {
       'durationSec': durationSec,
       'isFeatured': isFeatured,
       'downloadAllowed': downloadAllowed,
+      'isLive': isLive,
+      'livePlatform': livePlatform?.name,
+      'liveUrl': liveUrl,
+      'scheduledAt': scheduledAt?.toUtc().toIso8601String(),
     };
   }
 
@@ -89,9 +111,20 @@ class Sermon extends Equatable {
       durationSec: map['durationSec'] as int?,
       isFeatured: (map['isFeatured'] as bool?) ?? false,
       downloadAllowed: (map['downloadAllowed'] as bool?) ?? false,
+      isLive: (map['isLive'] as bool?) ?? false,
+      livePlatform: (map['livePlatform'] as String?) != null
+          ? LivePlatform.values.firstWhere(
+              (p) => p.name == map['livePlatform'] as String,
+              orElse: () => LivePlatform.other,
+            )
+          : null,
+      liveUrl: map['liveUrl'] as String?,
+      scheduledAt: (map['scheduledAt'] as String?) != null
+          ? DateTime.tryParse(map['scheduledAt'] as String)?.toLocal()
+          : null,
     );
   }
 
   @override
-  List<Object?> get props => [id, churchId, title, mediaType, mediaUrl, publishedAt, isFeatured];
+  List<Object?> get props => [id, churchId, title, mediaType, mediaUrl, publishedAt, isFeatured, isLive, livePlatform, liveUrl];
 }
