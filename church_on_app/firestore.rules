@@ -6,7 +6,7 @@ service cloud.firestore {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superAdmin'];
     }
     function isMemberOf(churchId) {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)/memberships/$(churchId));
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)/memberships/$(churchId));
     }
     function userChurchId(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data.churchId;
@@ -19,32 +19,36 @@ service cloud.firestore {
 
     match /churches/{churchId} {
       allow read: if true;
-      allow write: if isAdmin() && userChurchId(request.auth.uid) == churchId;
+      allow write: if isAdmin() && isMemberOf(churchId);
 
       match /sermons/{sid} {
         allow read: if true;
-        allow write: if isAdmin() && userChurchId(request.auth.uid) == churchId;
+        allow write: if isMemberOf(churchId) && isAdmin();
       }
 
       match /events/{eid} {
         allow read: if true;
-        allow write: if isAdmin() && userChurchId(request.auth.uid) == churchId;
+        allow write: if isMemberOf(churchId) && isAdmin();
       }
 
       match /announcements/{aid} {
-        allow read: if resource.data.status == 'published' || isAdmin();
-        allow write: if isAdmin() && userChurchId(request.auth.uid) == churchId;
+        allow read: if resource.data.status == 'published' || (isMemberOf(churchId) && isAdmin());
+        allow write: if isMemberOf(churchId) && isAdmin();
       }
 
       match /news/{nid} {
-        allow read: if resource.data.status == 'published' || isAdmin();
-        allow write: if isAdmin() && userChurchId(request.auth.uid) == churchId;
+        allow read: if resource.data.status == 'published' || (isMemberOf(churchId) && isAdmin());
+        allow write: if isMemberOf(churchId) && isAdmin();
       }
 
       match /reports/{rid} {
-        allow read: if isAdmin() && userChurchId(request.auth.uid) == churchId;
-        allow write: if isAdmin() && userChurchId(request.auth.uid) == churchId;
+        allow read, write: if isMemberOf(churchId) && isAdmin();
       }
+    }
+
+    match /domains/{host} {
+      allow read: if true; // public mapping host -> churchId
+      allow write: if isAdmin();
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/membership.dart';
+import '../services/domain_service.dart';
 import 'auth_providers.dart';
 
 final membershipsProvider = StreamProvider<List<Membership>>((ref) {
@@ -17,13 +18,25 @@ final membershipsProvider = StreamProvider<List<Membership>>((ref) {
       .map((s) => s.docs.map((d) => Membership.fromMap(d.data())).toList());
 });
 
-final activeChurchIdProvider = StateProvider<String?>((ref) {
-  final currentUser = ref.watch(currentUserStreamProvider).valueOrNull;
-  final memberships = ref.watch(membershipsProvider).valueOrNull ?? const <Membership>[];
-  // prefer user's previous churchId if still a member; otherwise first membership
-  final previous = currentUser?.churchId;
-  if (previous != null && memberships.any((m) => m.churchId == previous)) {
-    return previous;
+final activeChurchIdProvider = StateProvider<String?>((ref) => null);
+
+final domainResolvedChurchProvider = FutureProvider<String?>((ref) async {
+  return DomainService().resolveChurchIdFromHost();
+});
+
+final tenantBootstrapProvider = FutureProvider<void>((ref) async {
+  final domainChurch = await ref.read(domainResolvedChurchProvider.future);
+  if (domainChurch != null) {
+    ref.read(activeChurchIdProvider.notifier).state = domainChurch;
+    return;
   }
-  return memberships.isNotEmpty ? memberships.first.churchId : null;
+  final user = ref.watch(currentUserStreamProvider).valueOrNull;
+  if (user?.churchId != null) {
+    ref.read(activeChurchIdProvider.notifier).state = user!.churchId;
+    return;
+  }
+  final memberships = await ref.read(membershipsProvider.future);
+  if (memberships.isNotEmpty) {
+    ref.read(activeChurchIdProvider.notifier).state = memberships.first.churchId;
+  }
 });

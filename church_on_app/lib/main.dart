@@ -9,6 +9,7 @@ import 'app/app.dart';
 import 'common/providers/firebase_flag.dart';
 import 'firebase_options.dart';
 import 'common/providers/app_init_providers.dart';
+import 'common/providers/tenant_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,7 @@ class _AppWithInit extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appInitProvider);
+    ref.watch(tenantBootstrapProvider);
     return const ChurchOnApp();
   }
 }
