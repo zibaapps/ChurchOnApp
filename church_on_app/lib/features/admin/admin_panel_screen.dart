@@ -59,6 +59,18 @@ class AdminPanelScreen extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/reports'),
           ),
+          ListTile(
+            leading: const Icon(Icons.qr_code),
+            title: const Text('Invite Cards'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/invites'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Tenant Settings'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/admin/tenant-settings'),
+          ),
         ],
       ),
     );
