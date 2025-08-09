@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../common/providers/auth_providers.dart';
 import '../../common/providers/tenant_providers.dart';
+import '../../common/services/security_service.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -66,6 +67,24 @@ class ProfileTab extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/admin'),
                   ),
+                  SwitchListTile(
+                    title: const Text('Zip Mode (Emergency Lockdown)'),
+                    subtitle: const Text('Temporarily restrict app access for this church'),
+                    value: false,
+                    onChanged: (v) async {
+                      final churchId = activeChurchId;
+                      if (churchId == null) return;
+                      final svc = ZipModeService();
+                      if (v) {
+                        await svc.enable(churchId: churchId, reason: 'Admin enabled via Profile');
+                      } else {
+                        await svc.disable(churchId: churchId);
+                      }
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Zip Mode ${v ? 'Enabled' : 'Disabled'}')));
+                      }
+                    },
+                  ),
                 ],
                 if (isSuper)
                   ListTile(
@@ -75,6 +94,7 @@ class ProfileTab extends ConsumerWidget {
                     onTap: () => context.push('/superadmin'),
                   ),
                 const SizedBox(height: 12),
+                _ShakeSosTile(),
                 FilledButton.tonal(
                   onPressed: () => auth.signOut(),
                   child: const Text('Sign out'),
@@ -84,6 +104,45 @@ class ProfileTab extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ShakeSosTile extends StatefulWidget {
+  @override
+  State<_ShakeSosTile> createState() => _ShakeSosTileState();
+}
+
+class _ShakeSosTileState extends State<_ShakeSosTile> {
+  bool _enabled = false;
+  final _svc = ShakeSosService();
+
+  @override
+  void dispose() {
+    _svc.stopListening();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: const Text('Shake to SOS'),
+      subtitle: const Text('Shake device to call and text emergency contacts'),
+      value: _enabled,
+      onChanged: (v) async {
+        setState(() => _enabled = v);
+        if (v) {
+          _svc.startListening(
+            getEmergencyNumbers: () async {
+              // TODO: Load from user settings; fallback to support number
+              return const <String>[];
+            },
+            defaultNumber: '+260968551110',
+          );
+        } else {
+          _svc.stopListening();
+        }
+      },
     );
   }
 }

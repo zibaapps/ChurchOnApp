@@ -24,6 +24,9 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin() && isMemberOf(churchId);
 
+      // Zip Mode metadata on church doc
+      allow update: if isAdmin() && isMemberOf(churchId);
+
       match /sermons/{sid} {
         allow read: if true;
         allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
