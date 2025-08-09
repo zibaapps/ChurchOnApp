@@ -1,6 +1,6 @@
 # Church On App — Technical Blueprint
 
-Domain: churchapp.cloud | Support: support@churchapp.cloud | Phone: +260968551110
+Domain: churchapp.cloud | Support: support@churchapp.cloud | Phone: +260955202036
 
 ## Architecture
 - Flutter (mobile/web), Riverpod, GoRouter, Material 3

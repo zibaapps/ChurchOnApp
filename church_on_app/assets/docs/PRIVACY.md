@@ -2,7 +2,7 @@
 
 Effective date: 2025-01-01
 
-Contact: support@churchapp.cloud | +260968551110
+Contact: support@churchapp.cloud | +260955202036
 
 ## Overview
 Church On App ("the App") is a multi-tenant platform used by churches to facilitate community engagement, content sharing, giving, interchurch activities, messaging, and games. The App is operated under the domain `churchapp.cloud` (subject to change). This policy explains what data we collect, how we use it, how it is shared, and your choices.
@@ -59,4 +59,4 @@ We may update this policy. Material changes will be communicated in-app or via e
 ## Contact
 Church On App — `churchapp.cloud`
 Email: support@churchapp.cloud
-Phone: +260968551110
+Phone: +260955202036

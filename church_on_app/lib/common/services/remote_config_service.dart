@@ -8,7 +8,7 @@ class RemoteConfigService {
     await _rc.setDefaults(const {
       'domain': 'churchapp.cloud',
       'supportEmail': 'support@churchapp.cloud',
-      'supportPhone': '+260968551110',
+      'supportPhone': '+260955202036',
     });
     await _rc.fetchAndActivate();
   }

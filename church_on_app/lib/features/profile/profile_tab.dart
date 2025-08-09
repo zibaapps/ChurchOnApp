@@ -153,7 +153,7 @@ class _ShakeSosTileState extends State<_ShakeSosTile> {
               // Load latest from Firestore via service screen if needed; for now the SOS will fall back automatically
               return const <String>[];
             },
-            defaultNumber: '+260968551110',
+            defaultNumber: '+260955202036',
           );
         } else {
           _svc.stopListening();
