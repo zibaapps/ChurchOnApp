@@ -55,7 +55,21 @@ class InterchurchEventsScreen extends ConsumerWidget {
               return Card(
                 child: ListTile(
                   title: Text(e.name),
-                  subtitle: Text('${e.date.toLocal()} • ${e.location ?? ''}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${e.date.toLocal()} • ${e.location ?? ''}'),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Chip(label: Text('Interchurch')),
+                          if ((e.participatingChurchIds).isNotEmpty) Chip(label: Text('${e.participatingChurchIds.length} churches')),
+                        ],
+                      ),
+                    ],
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -65,9 +79,6 @@ class InterchurchEventsScreen extends ConsumerWidget {
                       IconButton(
                         icon: const Icon(Icons.person_add_alt_1),
                         onPressed: () {
-                          // Navigate to invite screen with draft activity id if needed
-                          // Here we don't have activity id mapping for legacy events; this is for new activities you create
-                          // Provide guidance via snackbar
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Use the + button to create an interchurch event, then invite churches.')));
                         },
                       ),
