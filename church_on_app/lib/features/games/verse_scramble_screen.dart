@@ -44,15 +44,27 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
     final user = ref.read(currentUserStreamProvider).valueOrNull;
     if (churchId == null || user == null) return;
     bool optIn = false;
+    bool shareName = false;
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Submit Score'),
         content: StatefulBuilder(
-          builder: (context, setState) => CheckboxListTile(
-            value: optIn,
-            onChanged: (v) => setState(() => optIn = v ?? false),
-            title: const Text('Opt-in to Global Leaderboard'),
+          builder: (context, setState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CheckboxListTile(
+                value: optIn,
+                onChanged: (v) => setState(() => optIn = v ?? false),
+                title: const Text('Opt-in to Global Leaderboard'),
+              ),
+              if (optIn)
+                SwitchListTile(
+                  value: shareName,
+                  onChanged: (v) => setState(() => shareName = v),
+                  title: const Text('Show my name globally (otherwise Anonymous)'),
+                ),
+            ],
           ),
         ),
         actions: [
@@ -68,6 +80,7 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
       game: 'scramble',
       score: _score,
       optInGlobal: optIn,
+      shareNameGlobal: shareName,
     );
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Score submitted')));

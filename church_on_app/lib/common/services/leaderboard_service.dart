@@ -4,6 +4,8 @@ class LeaderboardService {
   LeaderboardService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
   final FirebaseFirestore _firestore;
 
+  static final Map<String, DateTime> _lastSubmitPerUserGame = <String, DateTime>{};
+
   CollectionReference<Map<String, dynamic>> _churchScores(String churchId) =>
       _firestore.collection('churches').doc(churchId).collection('games_scores');
   CollectionReference<Map<String, dynamic>> get _globalScores => _firestore.collection('global_games_scores');
@@ -15,23 +17,39 @@ class LeaderboardService {
     required String game,
     required int score,
     required bool optInGlobal,
+    bool shareNameGlobal = false,
   }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
+    if (userId == 'guest') return;
+    final key = '$userId/$game';
+    final nowDt = DateTime.now();
+    final last = _lastSubmitPerUserGame[key];
+    if (last != null && nowDt.difference(last).inSeconds < 5) {
+      return; // throttle
+    }
+    _lastSubmitPerUserGame[key] = nowDt;
+
+    final safeScore = score.clamp(0, 100000); // sanity bound
+    final now = nowDt.toUtc().toIso8601String();
+
     await _churchScores(churchId).add({
       'userId': userId,
       'userName': userName,
       'game': game,
-      'score': score,
+      'score': safeScore,
       'createdAt': now,
       'optInGlobal': optInGlobal,
+      'anonymous': false,
     });
+
     if (optInGlobal) {
+      final publicName = shareNameGlobal ? (userName.isNotEmpty ? userName : 'User') : 'Anonymous';
       await _globalScores.add({
         'userId': userId,
-        'userName': userName,
+        'userName': publicName,
+        'anonymous': !shareNameGlobal,
         'churchId': churchId,
         'game': game,
-        'score': score,
+        'score': safeScore,
         'createdAt': now,
       });
     }
