@@ -6,25 +6,26 @@ import 'package:flutter/foundation.dart';
 import 'router.dart';
 import '../common/providers/theme_providers.dart';
 import '../common/providers/tenant_providers.dart';
+import '../common/services/domain_service.dart';
 
 class ChurchOnApp extends ConsumerWidget {
   const ChurchOnApp({super.key});
 
+  Future<void> _bootstrapDomain(WidgetRef ref) async {
+    if (!kIsWeb) return;
+    final current = ref.read(activeChurchIdProvider);
+    if (current != null) return;
+    try {
+      final id = await DomainService().resolveChurchIdFromHost();
+      if (id != null && ref.read(activeChurchIdProvider) == null) {
+        ref.read(activeChurchIdProvider.notifier).state = id;
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Auto-select church by domain on web
-    if (kIsWeb) {
-      try {
-        final uri = Uri.base; // avoids dart:html
-        final host = uri.host;
-        final parts = host.split('.');
-        if (parts.length > 2) {
-          final sub = parts.first;
-          ref.read(activeChurchIdProvider.notifier).state ??= sub;
-        }
-      } catch (_) {}
-    }
-
+    _bootstrapDomain(ref);
     return MaterialApp.router(
       title: 'Church On App',
       debugShowCheckedModeBanner: false,
