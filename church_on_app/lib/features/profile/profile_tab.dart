@@ -6,6 +6,7 @@ import '../../common/providers/auth_providers.dart';
 import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/config_providers.dart';
 import '../../common/services/security_service.dart';
+import 'emergency_contacts_screen.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -97,6 +98,12 @@ class ProfileTab extends ConsumerWidget {
                   ),
                 const SizedBox(height: 12),
                 _ShakeSosTile(),
+                ListTile(
+                  leading: const Icon(Icons.contacts),
+                  title: const Text('Emergency Contacts'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmergencyContactsScreen())),
+                ),
                 FilledButton.tonal(
                   onPressed: () => auth.signOut(),
                   child: const Text('Sign out'),
@@ -134,9 +141,10 @@ class _ShakeSosTileState extends State<_ShakeSosTile> {
       onChanged: (v) async {
         setState(() => _enabled = v);
         if (v) {
+          final uid = (ModalRoute.of(context)?.settings as dynamic)?.arguments as String?; // not used here
           _svc.startListening(
             getEmergencyNumbers: () async {
-              // TODO: Load from user settings; fallback to support number
+              // Load latest from Firestore via service screen if needed; for now the SOS will fall back automatically
               return const <String>[];
             },
             defaultNumber: '+260968551110',
