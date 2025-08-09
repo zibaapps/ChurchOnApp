@@ -42,6 +42,7 @@ import '../features/games/verse_scramble_screen.dart';
 import '../features/games/leaderboard_screen.dart';
 import '../features/give/tithes_admin_screen.dart';
 import '../features/bible/bible_screen.dart';
+import '../features/bible/bible_cache_screen.dart';
 import '../features/support/support_screen.dart';
 
 final router = GoRouter(
@@ -109,6 +110,7 @@ final router = GoRouter(
     GoRoute(path: '/news', builder: (c, s) => const NewsScreen()),
     GoRoute(path: '/reports', builder: (c, s) => const ReportsScreen()),
     GoRoute(path: '/bible', builder: (c, s) => const BibleScreen()),
+    GoRoute(path: '/bible/cache', builder: (c, s) => const BibleCacheScreen()),
     GoRoute(path: '/support', builder: (c, s) => const SupportScreen()),
     GoRoute(
       path: '/ar/scan',

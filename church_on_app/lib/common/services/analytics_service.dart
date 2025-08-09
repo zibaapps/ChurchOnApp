@@ -39,4 +39,43 @@ class AnalyticsService {
       'attending': attending,
     });
   }
+
+  Future<void> logBibleRead({required String version, required String book, required int chapter}) async {
+    await _analytics.logEvent(name: 'bible_read', parameters: {
+      'version': version,
+      'book': book,
+      'chapter': chapter,
+    });
+  }
+
+  Future<void> logBibleTtsPlay({required String version, required String book, required int chapter}) async {
+    await _analytics.logEvent(name: 'bible_tts_play', parameters: {
+      'version': version,
+      'book': book,
+      'chapter': chapter,
+    });
+  }
+
+  Future<void> logPlanProgress({required String userId, required String planId, required int streak}) async {
+    await _analytics.logEvent(name: 'plan_progress', parameters: {
+      'userId': userId,
+      'planId': planId,
+      'streak': streak,
+    });
+  }
+
+  Future<void> logPlanComplete({required String userId, required String planId}) async {
+    await _analytics.logEvent(name: 'plan_complete', parameters: {
+      'userId': userId,
+      'planId': planId,
+    });
+  }
+
+  Future<void> logReportView({required String churchId, required String reportId, required String type}) async {
+    await _analytics.logEvent(name: 'report_view', parameters: {
+      'churchId': churchId,
+      'reportId': reportId,
+      'type': type,
+    });
+  }
 }

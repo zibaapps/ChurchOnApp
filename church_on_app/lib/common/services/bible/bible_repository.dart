@@ -38,6 +38,15 @@ class BibleRepository {
     return jsonDecode(raw) as Map<String, dynamic>;
   }
 
+  Future<void> evictBook({required String version, required String book}) async {
+    await init();
+    final key = _key(version, book);
+    final box = _hive.box<String>(_boxName);
+    if (box.containsKey(key)) {
+      await box.delete(key);
+    }
+  }
+
   // Returns list of verses for a chapter (1-based)
   Future<List<String>> getChapter({required String version, required String book, required int chapter}) async {
     final data = await getBook(version: version, book: book);
