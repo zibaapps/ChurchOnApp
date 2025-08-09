@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:convert';
+import 'package:csv/csv.dart';
+import '../../common/web/export_csv.dart' if (dart.library.html) '../../common/web/export_csv_web.dart';
 
 import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/auth_providers.dart';
@@ -107,10 +110,15 @@ class _ContributionPoolsTab extends ConsumerWidget {
                           final amount = await showDialog<double>(context: context, builder: (_) => const _AmountDialog());
                           if (amount != null && amount > 0) {
                             await FinanceService().contribute(churchId, p.id, amount);
+                            final user = ref.read(currentUserStreamProvider).valueOrNull;
+                            if (user != null) {
+                              await FinanceService().addContributor(churchId, p.id, userId: user.uid, amount: amount);
+                            }
                             if (context.mounted) await showSuccessAnimation(context, message: 'Thank you for contributing!');
                           }
                         },
                       ),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => _PoolDetailScreen(churchId: churchId, pool: p))),
                     ),
                   );
                 },
@@ -209,15 +217,34 @@ class _TithesTab extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    await showDialog(context: context, builder: (_) => _AddTitheDialog(churchId: churchId, userId: user.uid));
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Tithe (Admin only)'),
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await showDialog(context: context, builder: (_) => _AddTitheDialog(churchId: churchId, userId: user.uid));
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Tithe (Admin only)'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      final rows = <List<String>>[
+                        ['Amount', 'CreatedAt', 'Note'],
+                        ...items.map((t) => [
+                              t.amount.toStringAsFixed(2),
+                              t.createdAt.toIso8601String(),
+                              t.note ?? '',
+                            ]),
+                      ];
+                      final csv = const ListToCsvConverter().convert(rows);
+                      final bytes = utf8.encode(csv);
+                      exportCsv('my_tithes.csv', bytes);
+                    },
+                    icon: const Icon(Icons.download),
+                    label: const Text('Export CSV'),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -302,6 +329,70 @@ class _PaymentsTab extends ConsumerWidget {
         onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaymentScreen())),
         icon: const Icon(Icons.payments),
         label: const Text('Open Payments'),
+      ),
+    );
+  }
+}
+
+class _PoolDetailScreen extends ConsumerWidget {
+  const _PoolDetailScreen({required this.churchId, required this.pool});
+  final String churchId;
+  final ContributionPool pool;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final svc = FinanceService();
+    final progress = pool.targetAmount <= 0 ? 0.0 : (pool.currentAmount / pool.targetAmount).clamp(0, 1).toDouble();
+    return Scaffold(
+      appBar: AppBar(title: Text(pool.title), actions: [
+        IconButton(
+          icon: const Icon(Icons.share),
+          onPressed: () {
+            final msg = 'Support ${pool.title}: K${pool.currentAmount.toStringAsFixed(2)} / K${pool.targetAmount.toStringAsFixed(2)}';
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Share: $msg')));
+          },
+        ),
+      ]),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (pool.description != null) Text(pool.description!),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(value: progress),
+                const SizedBox(height: 4),
+                Text('K${pool.currentAmount.toStringAsFixed(2)} / K${pool.targetAmount.toStringAsFixed(2)}'),
+                const SizedBox(height: 16),
+                const Text('Contributors', style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: svc.streamContributors(churchId, pool.id),
+              builder: (context, snap) {
+                final items = snap.data ?? const <Map<String, dynamic>>[];
+                if (items.isEmpty) return const Center(child: Text('No contributions yet'));
+                return ListView.separated(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final c = items[i];
+                    return ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text('K${(c['amount'] as num).toStringAsFixed(2)}'),
+                      subtitle: Text('User: ${c['userId']} • ${(c['createdAt'] as String?)?.split('T').first ?? ''}'),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

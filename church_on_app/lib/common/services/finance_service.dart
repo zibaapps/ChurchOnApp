@@ -25,6 +25,24 @@ class FinanceService {
     await _poolCol(churchId).doc(poolId).update({'currentAmount': FieldValue.increment(amount)});
   }
 
+  Stream<List<Map<String, dynamic>>> streamContributors(String churchId, String poolId) {
+    return _poolCol(churchId)
+        .doc(poolId)
+        .collection('contributors')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
+  }
+
+  Future<void> addContributor(String churchId, String poolId, {required String userId, required double amount}) async {
+    final ref = _poolCol(churchId).doc(poolId).collection('contributors').doc();
+    await ref.set({
+      'userId': userId,
+      'amount': amount,
+      'createdAt': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
   // Tithes
   CollectionReference<Map<String, dynamic>> _titheCol(String churchId) => _firestore.collection('churches').doc(churchId).collection('tithes');
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../common/widgets/animations.dart';
+
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
@@ -21,7 +23,10 @@ class OnboardingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () async {
+                await showSuccessAnimation(context, message: 'Onboarding complete');
+                if (context.mounted) context.go('/home');
+              },
               child: const Text('Continue as Guest'),
             ),
           ],
