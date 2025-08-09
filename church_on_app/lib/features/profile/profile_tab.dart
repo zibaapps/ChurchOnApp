@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../common/providers/auth_providers.dart';
 import '../../common/providers/tenant_providers.dart';
+import '../../common/providers/config_providers.dart';
 import '../../common/services/security_service.dart';
 
 class ProfileTab extends ConsumerWidget {
@@ -50,6 +51,7 @@ class ProfileTab extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                Text('Support: ${ref.watch(supportEmailProvider)} • ${ref.watch(supportPhoneProvider)}'),
                 DropdownButtonFormField<String>(
                   value: activeChurchId,
                   items: [

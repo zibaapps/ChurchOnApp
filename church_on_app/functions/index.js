@@ -9,10 +9,21 @@ function computeFee(amount) {
   return pct < 0.5 ? 0.5 : pct;
 }
 
+function verifySignature(req, secret) {
+  // TODO: Implement provider-specific HMAC verification
+  // Return true if valid, else false
+  return true;
+}
+
+const processedRefs = new Set();
+
 exports.mtnCallback = functions.https.onRequest(async (req, res) => {
   try {
+    if (!verifySignature(req, process.env.MTN_SECRET)) return res.status(401).json({ error: 'invalid signature' });
     const payload = req.body || {};
     const providerRef = payload.reference || payload.transactionId || '';
+    if (processedRefs.has(providerRef)) return res.json({ ok: true });
+    processedRefs.add(providerRef);
     const status = (payload.status || '').toLowerCase(); // success|failed|pending
     if (!providerRef) return res.status(400).json({ error: 'missing reference' });
 
@@ -44,8 +55,11 @@ exports.mtnCallback = functions.https.onRequest(async (req, res) => {
 
 exports.airtelCallback = functions.https.onRequest(async (req, res) => {
   try {
+    if (!verifySignature(req, process.env.AIRTEL_SECRET)) return res.status(401).json({ error: 'invalid signature' });
     const payload = req.body || {};
     const providerRef = payload.reference || payload.transactionId || '';
+    if (processedRefs.has(providerRef)) return res.json({ ok: true });
+    processedRefs.add(providerRef);
     const status = (payload.status || '').toLowerCase();
     if (!providerRef) return res.status(400).json({ error: 'missing reference' });
 
