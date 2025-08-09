@@ -18,6 +18,9 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
     'God is love',
     'The Lord is my shepherd',
     'I can do all things',
+    'Trust in the Lord',
+    'In the beginning God created',
+    'Be strong and courageous',
   ];
   late String _target;
   late String _scrambled;
@@ -107,11 +110,21 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_scrambled, style: Theme.of(context).textTheme.titleLarge),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
+              child: Text(_scrambled, style: Theme.of(context).textTheme.titleLarge),
+            ),
             const SizedBox(height: 16),
-            TextField(controller: _controller, decoration: const InputDecoration(labelText: 'Type the verse in order')),
+            TextField(controller: _controller, decoration: const InputDecoration(labelText: 'Type the verse in order', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            FilledButton(onPressed: _check, child: const Text('Submit')),
+            Row(
+              children: [
+                Expanded(child: FilledButton(onPressed: _check, child: const Text('Submit'))),
+                const SizedBox(width: 12),
+                IconButton(onPressed: _next, icon: const Icon(Icons.arrow_forward)),
+              ],
+            ),
           ],
         ),
       ),

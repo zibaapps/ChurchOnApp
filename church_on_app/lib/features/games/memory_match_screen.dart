@@ -30,6 +30,10 @@ class _MemoryMatchScreenState extends ConsumerState<MemoryMatchScreen> {
       'Psalm 23:1',
       'Philippians 4:13',
       'Romans 8:28',
+      'Proverbs 3:5',
+      'Isaiah 40:31',
+      'Jeremiah 29:11',
+      'Matthew 6:33',
     ];
     _cards = [
       for (final v in verses) _CardItem(v, false),
@@ -132,7 +136,7 @@ class _MemoryMatchScreenState extends ConsumerState<MemoryMatchScreen> {
             onTap: () => _tap(i),
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                color: c.revealed ? Theme.of(context).colorScheme.secondaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
