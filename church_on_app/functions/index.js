@@ -147,3 +147,16 @@ exports.requestAccountDeletion = functions.https.onCall(async (data, context) =>
   }, { merge: true });
   return { ok: true };
 });
+
+// Auto-generate thumbnails (placeholder: returns a generated URL based on title)
+exports.generateThumbnail = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  const { collection, churchId, docId, title } = data || {};
+  if (!collection || !churchId || !docId) throw new functions.https.HttpsError('invalid-argument', 'Missing fields');
+  // TODO: call real image generation provider; for now, create a placeholder URL using a service (e.g., dummyimage.com)
+  const encoded = encodeURIComponent((title || 'Sermon').slice(0, 30));
+  const url = `https://dummyimage.com/600x338/6750A4/ffffff&text=${encoded}`;
+  const ref = db.collection('churches').doc(churchId).collection(collection).doc(docId);
+  await ref.update({ thumbnailUrl: url, imageUrl: url, updatedAt: new Date().toISOString() });
+  return { url };
+});

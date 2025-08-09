@@ -20,13 +20,14 @@ class SermonsService {
         .map((s) => s.docs.map((d) => Sermon.fromDoc(d.id, d.data())).toList());
   }
 
-  Future<void> addSermon(String churchId, Sermon sermon) async {
+  Future<String> addSermon(String churchId, Sermon sermon) async {
     await ZipModeService().guardWrite(churchId);
-    await _firestore
+    final doc = await _firestore
         .collection('churches')
         .doc(churchId)
         .collection('sermons')
         .add(sermon.toMap());
+    return doc.id;
   }
 
   Future<void> incrementView(String churchId, String sermonId) async {
