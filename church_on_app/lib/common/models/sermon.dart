@@ -21,6 +21,9 @@ class Sermon extends Equatable {
     this.liveUrl,
     this.scheduledAt,
     this.viewCount = 0,
+    this.recordingUrl,
+    this.rtmpUrl,
+    this.streamKey,
   });
 
   final String id;
@@ -40,6 +43,9 @@ class Sermon extends Equatable {
   final String? liveUrl;
   final DateTime? scheduledAt;
   final int viewCount;
+  final String? recordingUrl; // VOD link after live
+  final String? rtmpUrl; // external camera ingest URL
+  final String? streamKey; // external stream key
 
   Sermon copyWith({
     String? id,
@@ -59,6 +65,9 @@ class Sermon extends Equatable {
     String? liveUrl,
     DateTime? scheduledAt,
     int? viewCount,
+    String? recordingUrl,
+    String? rtmpUrl,
+    String? streamKey,
   }) {
     return Sermon(
       id: id ?? this.id,
@@ -78,6 +87,9 @@ class Sermon extends Equatable {
       liveUrl: liveUrl ?? this.liveUrl,
       scheduledAt: scheduledAt ?? this.scheduledAt,
       viewCount: viewCount ?? this.viewCount,
+      recordingUrl: recordingUrl ?? this.recordingUrl,
+      rtmpUrl: rtmpUrl ?? this.rtmpUrl,
+      streamKey: streamKey ?? this.streamKey,
     );
   }
 
@@ -99,6 +111,9 @@ class Sermon extends Equatable {
       'liveUrl': liveUrl,
       'scheduledAt': scheduledAt?.toUtc().toIso8601String(),
       'viewCount': viewCount,
+      'recordingUrl': recordingUrl,
+      'rtmpUrl': rtmpUrl,
+      'streamKey': streamKey,
     };
   }
 
@@ -128,9 +143,12 @@ class Sermon extends Equatable {
           ? DateTime.tryParse(map['scheduledAt'] as String)?.toLocal()
           : null,
       viewCount: (map['viewCount'] as num?)?.toInt() ?? 0,
+      recordingUrl: map['recordingUrl'] as String?,
+      rtmpUrl: map['rtmpUrl'] as String?,
+      streamKey: map['streamKey'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [id, churchId, title, mediaType, mediaUrl, publishedAt, isFeatured, isLive, livePlatform, liveUrl, viewCount];
+  List<Object?> get props => [id, churchId, title, mediaType, mediaUrl, publishedAt, isFeatured, isLive, livePlatform, liveUrl, viewCount, recordingUrl, rtmpUrl, streamKey];
 }
