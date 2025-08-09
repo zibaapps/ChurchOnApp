@@ -1,0 +1,11 @@
+{
+  "app.title": "Church On App",
+  "auth.login": "Login",
+  "auth.register": "Register",
+  "tabs.home": "Home",
+  "tabs.sermons": "Sermons",
+  "tabs.connect": "Connect",
+  "tabs.give": "Give",
+  "tabs.events": "Events",
+  "tabs.profile": "Profile"
+}
