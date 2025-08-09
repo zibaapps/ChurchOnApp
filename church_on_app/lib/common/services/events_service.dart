@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/event.dart';
+import 'security_service.dart';
 
 class EventsService {
   EventsService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -21,10 +22,12 @@ class EventsService {
   }
 
   Future<void> addEvent(String churchId, EventItem event) async {
+    await ZipModeService().guardWrite(churchId);
     await _firestore.collection('churches').doc(churchId).collection('events').add(event.toMap());
   }
 
   Future<void> toggleRsvp(String churchId, String eventId, String uid, bool attend) async {
+    await ZipModeService().guardWrite(churchId);
     final ref = _firestore.collection('churches').doc(churchId).collection('events').doc(eventId);
     await _firestore.runTransaction((txn) async {
       final snap = await txn.get(ref);

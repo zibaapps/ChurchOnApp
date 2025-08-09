@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/report.dart';
+import 'security_service.dart';
 
 class ReportsService {
   ReportsService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -21,6 +22,7 @@ class ReportsService {
   }
 
   Future<void> addReport(String churchId, ChurchReport r) async {
+    await ZipModeService().guardWrite(churchId);
     await _firestore.collection('churches').doc(churchId).collection('reports').add(r.toMap());
   }
 }

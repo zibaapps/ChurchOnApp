@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/announcement.dart';
+import 'security_service.dart';
 
 class AnnouncementService {
   AnnouncementService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -32,10 +33,12 @@ class AnnouncementService {
   }
 
   Future<void> addAnnouncement(String churchId, Announcement a) async {
+    await ZipModeService().guardWrite(churchId);
     await _firestore.collection('churches').doc(churchId).collection('announcements').add(a.toMap());
   }
 
   Future<void> updateStatus(String churchId, String id, PublishStatus status) async {
+    await ZipModeService().guardWrite(churchId);
     await _firestore.collection('churches').doc(churchId).collection('announcements').doc(id).update({'status': status.name});
   }
 }
