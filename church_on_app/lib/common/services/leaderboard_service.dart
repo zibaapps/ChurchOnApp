@@ -55,18 +55,51 @@ class LeaderboardService {
     }
   }
 
-  Stream<List<Map<String, dynamic>>> streamChurchTopAggregated(String churchId, {int limit = 100}) {
-    return _churchScores(churchId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((s) => _aggregateByUser(s.docs.map((d) => d.data()).toList()));
+  String? _startIsoForTimeframe(String timeframe) {
+    final now = DateTime.now().toUtc();
+    if (timeframe == 'week') {
+      final start = now.subtract(Duration(days: now.weekday - 1));
+      return DateTime.utc(start.year, start.month, start.day).toIso8601String();
+    } else if (timeframe == 'month') {
+      final start = DateTime.utc(now.year, now.month, 1);
+      return start.toIso8601String();
+    }
+    return null; // all-time
   }
 
-  Stream<List<Map<String, dynamic>>> streamGlobalTopAggregated({int limit = 200}) {
-    return _globalScores
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
+  Stream<List<Map<String, dynamic>>> streamChurchTopAggregated(
+    String churchId, {
+    String game = 'all',
+    String timeframe = 'all', // all | week | month
+    int limit = 200,
+  }) {
+    Query<Map<String, dynamic>> q = _churchScores(churchId);
+    final startIso = _startIsoForTimeframe(timeframe);
+    if (startIso != null) {
+      q = q.where('createdAt', isGreaterThanOrEqualTo: startIso);
+    }
+    if (game != 'all') {
+      q = q.where('game', isEqualTo: game);
+    }
+    q = q.orderBy('createdAt', descending: true).limit(limit);
+    return q.snapshots().map((s) => _aggregateByUser(s.docs.map((d) => d.data()).toList()));
+  }
+
+  Stream<List<Map<String, dynamic>>> streamGlobalTopAggregated({
+    String game = 'all',
+    String timeframe = 'all',
+    int limit = 400,
+  }) {
+    Query<Map<String, dynamic>> q = _globalScores;
+    final startIso = _startIsoForTimeframe(timeframe);
+    if (startIso != null) {
+      q = q.where('createdAt', isGreaterThanOrEqualTo: startIso);
+    }
+    if (game != 'all') {
+      q = q.where('game', isEqualTo: game);
+    }
+    q = q.orderBy('createdAt', descending: true).limit(limit);
+    return q
         .snapshots()
         .map((s) => _aggregateByUser(s.docs.map((d) => d.data()).toList()))
         .map((list) => list..sort((a, b) => (b['total'] as int).compareTo(a['total'] as int)));
