@@ -41,6 +41,7 @@ dependencies:
   firebase_messaging: ^15.1.2
   firebase_crashlytics: ^4.1.2
   firebase_analytics: ^11.1.0
+  firebase_remote_config: ^5.0.4
 
   # Routing & State
   go_router: ^14.2.7
