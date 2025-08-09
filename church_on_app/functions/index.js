@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 
 try { admin.initializeApp(); } catch (_) {}
 const db = admin.firestore();
@@ -10,9 +11,16 @@ function computeFee(amount) {
 }
 
 function verifySignature(req, secret) {
-  // TODO: Implement provider-specific HMAC verification
-  // Return true if valid, else false
-  return true;
+  // Example: HMAC of raw body with shared secret in header 'x-signature'
+  try {
+    const sig = req.headers['x-signature'] || req.headers['x-pay-signature'];
+    if (!sig || !secret) return false;
+    const h = crypto.createHmac('sha256', secret).update(req.rawBody || JSON.stringify(req.body || {})).digest('hex');
+    return sig === h;
+  } catch (e) {
+    console.error('verifySignature error', e);
+    return false;
+  }
 }
 
 const processedRefs = new Set();

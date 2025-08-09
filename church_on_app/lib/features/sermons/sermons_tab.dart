@@ -11,7 +11,16 @@ class SermonsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sermonsAsync = ref.watch(sermonsStreamProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sermons')),
+      appBar: AppBar(
+        title: const Text('Sermons'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_book),
+            onPressed: () => context.push('/bible'),
+            tooltip: 'Bible & Resources',
+          ),
+        ],
+      ),
       body: sermonsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
