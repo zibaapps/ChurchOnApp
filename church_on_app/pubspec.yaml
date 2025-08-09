@@ -96,6 +96,9 @@ dependencies:
   # Web AR viewer for models on web
   model_viewer_plus: ^1.9.0
 
+  # Animations
+  lottie: ^2.7.0
+
   cupertino_icons: ^1.0.6
 
 
