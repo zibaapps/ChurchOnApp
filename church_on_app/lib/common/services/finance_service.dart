@@ -54,6 +54,21 @@ class FinanceService {
         .map((s) => s.docs.map((d) => TitheRecord.fromDoc(d.id, d.data())).toList());
   }
 
+  Stream<List<TitheRecord>> streamAllTithes(
+    String churchId, {
+    String? startIso, // ISO8601 strings for lexicographic queries
+    String? endIso,
+  }) {
+    Query<Map<String, dynamic>> q = _titheCol(churchId).orderBy('createdAt', descending: true);
+    if (startIso != null && startIso.isNotEmpty) {
+      q = q.where('createdAt', isGreaterThanOrEqualTo: startIso);
+    }
+    if (endIso != null && endIso.isNotEmpty) {
+      q = q.where('createdAt', isLessThanOrEqualTo: endIso);
+    }
+    return q.snapshots().map((s) => s.docs.map((d) => TitheRecord.fromDoc(d.id, d.data())).toList());
+  }
+
   Future<void> addOrEditTithe(String churchId, TitheRecord t) async {
     await _titheCol(churchId).doc(t.id).set(t.toMap(), SetOptions(merge: true));
   }

@@ -37,6 +37,10 @@ import '../features/news/news_screen.dart';
 import '../features/reports/reports_screen.dart';
 import '../features/churches/nearby_churches_screen.dart';
 import '../features/games/bible_quiz_screen.dart';
+import '../features/games/memory_match_screen.dart';
+import '../features/games/verse_scramble_screen.dart';
+import '../features/games/leaderboard_screen.dart';
+import '../features/give/tithes_admin_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -86,12 +90,16 @@ final router = GoRouter(
     GoRoute(path: '/programs/year', builder: (c, s) => const YearProgramScreen()),
     GoRoute(path: '/moderation', builder: (c, s) => const ModerationScreen()),
     GoRoute(path: '/payments', builder: (c, s) => const PaymentScreen()),
+    GoRoute(path: '/admin/tithes', builder: (c, s) => const TithesAdminScreen()),
     GoRoute(path: '/tour', builder: (c, s) => const AppTourScreen()),
     GoRoute(path: '/admin/memberships', builder: (c, s) => const MembershipAdminScreen()),
     GoRoute(path: '/admin/add-invite', builder: (c, s) => const AddInviteScreen()),
     GoRoute(path: '/connect/chat', builder: (c, s) => const ChatListScreen()),
     GoRoute(path: '/churches/nearby', builder: (c, s) => const NearbyChurchesScreen()),
     GoRoute(path: '/connect/games', builder: (c, s) => const BibleQuizScreen()),
+    GoRoute(path: '/connect/games/memory', builder: (c, s) => const MemoryMatchScreen()),
+    GoRoute(path: '/connect/games/scramble', builder: (c, s) => const VerseScrambleScreen()),
+    GoRoute(path: '/connect/games/leaderboard', builder: (c, s) => const LeaderboardScreen()),
     GoRoute(path: '/chat/:id', builder: (c, s) => ChatRoomScreen(threadId: s.pathParameters['id']!)),
     GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
     GoRoute(path: '/connect/prayers', builder: (c, s) => const _PlaceholderPage(title: 'Prayer Requests')),
