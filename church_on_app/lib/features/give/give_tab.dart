@@ -207,6 +207,7 @@ class _TithesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final churchId = ref.watch(activeChurchIdProvider);
     final user = ref.watch(currentUserStreamProvider).valueOrNull;
+    final isAdmin = ref.watch(isAdminProvider);
     if (churchId == null || user == null) return const Center(child: Text('Sign in'));
     final svc = FinanceService();
     return StreamBuilder<List<TitheRecord>>(
@@ -227,6 +228,12 @@ class _TithesTab extends ConsumerWidget {
                     icon: const Icon(Icons.add),
                     label: const Text('Add Tithe (Admin only)'),
                   ),
+                  if (isAdmin)
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).pushNamed('/admin/tithes'),
+                      icon: const Icon(Icons.dashboard),
+                      label: const Text('Tithes Dashboard'),
+                    ),
                   OutlinedButton.icon(
                     onPressed: () {
                       final rows = <List<String>>[

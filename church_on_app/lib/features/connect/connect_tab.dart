@@ -18,7 +18,6 @@ class ConnectTab extends StatelessWidget {
           _Tile('Memory Match', route: '/connect/games/memory'),
           _Tile('Verse Scramble', route: '/connect/games/scramble'),
           _Tile('Leaderboard', route: '/connect/games/leaderboard'),
-          _Tile('Tithes Dashboard (Admin)', route: '/admin/tithes'),
         ],
       ),
     );
