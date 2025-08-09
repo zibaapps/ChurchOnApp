@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../common/providers/auth_providers.dart';
 import '../../common/providers/tenant_info_providers.dart';
+import '../../common/widgets/app_logo.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -46,9 +47,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
     final name = ref.watch(tenantDisplayNameProvider);
-    final iconUrl = ref.watch(tenantIconUrlProvider);
     return Scaffold(
       body: Center(
         child: AnimatedOpacity(
@@ -57,10 +56,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (iconUrl != null && iconUrl.isNotEmpty)
-                CircleAvatar(radius: 40, backgroundImage: NetworkImage(iconUrl))
-              else
-                Icon(Icons.church, size: 96, color: color),
+              // Use local asset logo if present, otherwise fall back to tenant icon URL or default icon
+              const _SplashLogo(),
               const SizedBox(height: 16),
               Text(name, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 24),
@@ -72,6 +69,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SplashLogo extends ConsumerWidget {
+  const _SplashLogo();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const SizedBox(
+      height: 120,
+      width: 120,
+      child: Center(child: AppLogo(size: 96)),
     );
   }
 }
