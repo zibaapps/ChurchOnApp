@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'fees_service.dart';
 import 'payments/mtn_momo_provider.dart';
 import 'payments/airtel_money_provider.dart';
+import 'security_service.dart';
 
 enum PaymentMethod { mtn, airtel, paypal }
 
@@ -34,6 +35,7 @@ class PaymentService {
     String? msisdn,
   }) async {
     try {
+      await ZipModeService().guardWrite(churchId);
       final fee = _fees.computeFee(amountZMW);
       final net = _fees.netAmount(amountZMW);
       final now = DateTime.now().toUtc();

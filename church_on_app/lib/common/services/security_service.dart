@@ -25,6 +25,17 @@ class ZipModeService {
     _zipStream.add(false);
     await _firestore.collection('churches').doc(churchId).update({'zipMode': {'enabled': false, 'updatedAt': DateTime.now().toUtc().toIso8601String()}});
   }
+
+  Future<bool> isZipEnabled(String churchId) async {
+    final doc = await _firestore.collection('churches').doc(churchId).get();
+    return (doc.data()?['zipMode']?['enabled'] as bool?) ?? false;
+  }
+
+  Future<void> guardWrite(String churchId) async {
+    if (await isZipEnabled(churchId)) {
+      throw Exception('Zip Mode is active. This action is temporarily disabled.');
+    }
+  }
 }
 
 class ShakeSosService {
