@@ -110,6 +110,8 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   build_runner: ^2.4.11
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -155,3 +157,26 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+# Configure app icons generation
+flutter_launcher_icons:
+  image_path: assets/images/logo.png
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/images/logo.png
+    background_color: "#ffffff"
+    theme_color: "#6750A4"
+
+# Configure native splash screen generation
+flutter_native_splash:
+  color: "#ffffff"
+  color_dark: "#111111"
+  image: assets/images/logo.png
+  image_dark: assets/images/logo.png
+  android_12:
+    image: assets/images/logo.png
+    icon_background_color: "#ffffff"
+    icon_background_color_dark: "#111111"
