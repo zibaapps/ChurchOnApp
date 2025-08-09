@@ -23,17 +23,29 @@ function verifySignature(req, secret) {
   }
 }
 
-const processedRefs = new Set();
+async function claimIdempotency(providerRef, ttlMinutes = 60) {
+  if (!providerRef) return false;
+  const ref = db.collection('webhook_dedup').doc(providerRef);
+  try {
+    await ref.create({ createdAt: admin.firestore.FieldValue.serverTimestamp(), ttlMinutes });
+    return true;
+  } catch (e) {
+    // Already exists
+    return false;
+  }
+}
 
 exports.mtnCallback = functions.https.onRequest(async (req, res) => {
   try {
     if (!verifySignature(req, process.env.MTN_SECRET)) return res.status(401).json({ error: 'invalid signature' });
     const payload = req.body || {};
     const providerRef = payload.reference || payload.transactionId || '';
-    if (processedRefs.has(providerRef)) return res.json({ ok: true });
-    processedRefs.add(providerRef);
-    const status = (payload.status || '').toLowerCase(); // success|failed|pending
     if (!providerRef) return res.status(400).json({ error: 'missing reference' });
+
+    const firstClaim = await claimIdempotency(providerRef);
+    if (!firstClaim) return res.json({ ok: true, dedup: true });
+
+    const status = (payload.status || '').toLowerCase(); // success|failed|pending
 
     const q = await db.collectionGroup('payments').where('providerRef', '==', providerRef).limit(1).get();
     if (q.empty) return res.status(404).json({ error: 'payment not found' });
@@ -66,10 +78,12 @@ exports.airtelCallback = functions.https.onRequest(async (req, res) => {
     if (!verifySignature(req, process.env.AIRTEL_SECRET)) return res.status(401).json({ error: 'invalid signature' });
     const payload = req.body || {};
     const providerRef = payload.reference || payload.transactionId || '';
-    if (processedRefs.has(providerRef)) return res.json({ ok: true });
-    processedRefs.add(providerRef);
-    const status = (payload.status || '').toLowerCase();
     if (!providerRef) return res.status(400).json({ error: 'missing reference' });
+
+    const firstClaim = await claimIdempotency(providerRef);
+    if (!firstClaim) return res.json({ ok: true, dedup: true });
+
+    const status = (payload.status || '').toLowerCase();
 
     const q = await db.collectionGroup('payments').where('providerRef', '==', providerRef).limit(1).get();
     if (q.empty) return res.status(404).json({ error: 'payment not found' });
@@ -95,4 +109,41 @@ exports.airtelCallback = functions.https.onRequest(async (req, res) => {
     console.error(e);
     return res.status(500).json({ error: e.message });
   }
+});
+
+// Reconciliation job: mark old pending payments as failed after timeout (placeholder until real provider checks)
+exports.reconcilePendingPayments = functions.pubsub.schedule('every 30 minutes').onRun(async () => {
+  const cutoff = Date.now() - 1000 * 60 * 60; // 1 hour
+  const q = await db.collectionGroup('payments').where('status', '==', 'pending').limit(200).get();
+  const batch = db.batch();
+  q.forEach((doc) => {
+    const d = doc.data();
+    const created = new Date(d.createdAt || 0).getTime();
+    if (created && created < cutoff) {
+      batch.update(doc.ref, { status: 'failed', updatedAt: new Date().toISOString() });
+    }
+  });
+  if (!q.empty) await batch.commit();
+  return null;
+});
+
+// Privacy: user export and deletion requests (stubs)
+exports.requestDataExport = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  const uid = context.auth.uid;
+  await db.collection('privacy_exports').doc(uid).set({
+    requestedAt: new Date().toISOString(),
+    status: 'queued',
+  }, { merge: true });
+  return { ok: true };
+});
+
+exports.requestAccountDeletion = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+  const uid = context.auth.uid;
+  await db.collection('deletion_requests').doc(uid).set({
+    requestedAt: new Date().toISOString(),
+    status: 'queued',
+  }, { merge: true });
+  return { ok: true };
 });
