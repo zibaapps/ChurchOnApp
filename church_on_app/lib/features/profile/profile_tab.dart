@@ -7,6 +7,7 @@ import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/config_providers.dart';
 import '../../common/services/security_service.dart';
 import 'emergency_contacts_screen.dart';
+import '../../common/providers/notifications_providers.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -62,6 +63,40 @@ class ProfileTab extends ConsumerWidget {
                   onChanged: (v) => ref.read(activeChurchIdProvider.notifier).state = v,
                   decoration: const InputDecoration(labelText: 'Active Church'),
                 ),
+                const Divider(),
+                Text('Notifications', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Consumer(builder: (context, ref, _) {
+                  final prefs = ref.watch(notificationPrefsProvider);
+                  return Column(
+                    children: [
+                      SwitchListTile(
+                        title: const Text('News'),
+                        value: prefs.news,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(news: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Events'),
+                        value: prefs.events,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(events: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Announcements'),
+                        value: prefs.announcements,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(announcements: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                    ],
+                  );
+                }),
                 const Divider(),
                 if (isAdmin) ...[
                   ListTile(
