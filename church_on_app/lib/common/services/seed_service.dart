@@ -8,6 +8,28 @@ class SeedService {
     final batch = _firestore.batch();
     final churchRef = _firestore.collection('churches').doc(churchId);
 
+    // Sample users and memberships
+    final users = [
+      {'uid': 'user1', 'email': 'alice@example.com', 'displayName': 'Alice', 'role': 'user'},
+      {'uid': 'user2', 'email': 'bob@example.com', 'displayName': 'Bob', 'role': 'user'},
+      {'uid': 'admin1', 'email': 'admin@example.com', 'displayName': 'Admin', 'role': 'admin'},
+    ];
+    for (final u in users) {
+      final userRef = _firestore.collection('users').doc(u['uid']!);
+      batch.set(userRef, {
+        'uid': u['uid'],
+        'email': u['email'],
+        'displayName': u['displayName'],
+        'role': u['role'],
+        'churchId': churchId,
+      });
+      final mRef = churchRef.collection('memberships').doc(u['uid']!);
+      batch.set(mRef, {
+        'role': u['role'],
+        'joinedAt': DateTime.now().toUtc().toIso8601String(),
+      });
+    }
+
     // Sample sermons
     for (int i = 1; i <= 5; i++) {
       final ref = churchRef.collection('sermons').doc();
