@@ -48,21 +48,21 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           const SizedBox(height: 12),
           TextFormField(controller: _msisdn, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Mobile number (MSISDN)')),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _method,
-            items: const [
-              DropdownMenuItem(value: 'mtn', child: Text('MTN MoMo')),
-              DropdownMenuItem(value: 'airtel', child: Text('Airtel Money')),
-              DropdownMenuItem(value: 'paypal', child: Text('PayPal')),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'mtn', label: Text('MTN'), icon: Icon(Icons.sim_card)),
+              ButtonSegment(value: 'airtel', label: Text('Airtel'), icon: Icon(Icons.sim_card_alert)),
+              ButtonSegment(value: 'paypal', label: Text('PayPal'), icon: Icon(Icons.account_balance_wallet)),
             ],
-            onChanged: (v) => setState(() => _method = v ?? 'mtn'),
-            decoration: const InputDecoration(labelText: 'Method'),
+            selected: {_method},
+            onSelectionChanged: (s) => setState(() => _method = s.first),
           ),
           const SizedBox(height: 16),
           Text('Fee: K${fee.toStringAsFixed(2)}'),
           Text('Net to church: K${net.toStringAsFixed(2)}'),
           const SizedBox(height: 24),
           FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: _method == 'mtn' ? Theme.of(context).colorScheme.primary : null),
             onPressed: _loading || amt <= 0 || churchId == null || user == null || _msisdn.text.isEmpty || _method != 'mtn'
                 ? null
                 : () async {
@@ -91,6 +91,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: _method == 'airtel' ? Theme.of(context).colorScheme.primary : null),
             onPressed: _loading || amt <= 0 || churchId == null || user == null || _msisdn.text.isEmpty || _method != 'airtel'
                 ? null
                 : () async {
@@ -116,6 +117,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             label: _loading && _method == 'airtel'
                 ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Text('Pay with Airtel'),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: _method == 'paypal' ? Theme.of(context).colorScheme.primary : null),
+            onPressed: null, // Implement PayPal integration when ready
+            icon: const Icon(Icons.account_balance_wallet),
+            label: const Text('Pay with PayPal (coming soon)'),
           ),
         ],
       ),
