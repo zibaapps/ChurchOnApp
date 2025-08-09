@@ -11,6 +11,9 @@ service cloud.firestore {
     function userChurchId(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data.churchId;
     }
+    function churchActive(chId) {
+      return get(/databases/$(database)/documents/churches/$(chId)).data.active == true;
+    }
 
     match /users/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
@@ -23,26 +26,41 @@ service cloud.firestore {
 
       match /sermons/{sid} {
         allow read: if true;
-        allow write: if isMemberOf(churchId) && isAdmin();
+        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
       }
 
       match /events/{eid} {
         allow read: if true;
-        allow write: if isMemberOf(churchId) && isAdmin();
+        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
       }
 
       match /announcements/{aid} {
         allow read: if resource.data.status == 'published' || (isMemberOf(churchId) && isAdmin());
-        allow write: if isMemberOf(churchId) && isAdmin();
+        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
       }
 
       match /news/{nid} {
         allow read: if resource.data.status == 'published' || (isMemberOf(churchId) && isAdmin());
-        allow write: if isMemberOf(churchId) && isAdmin();
+        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
       }
 
       match /reports/{rid} {
-        allow read, write: if isMemberOf(churchId) && isAdmin();
+        allow read, write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
+      }
+
+      match /payments/{pid} {
+        allow read: if isMemberOf(churchId);
+        allow write: if isMemberOf(churchId) && churchActive(churchId);
+      }
+
+      match /tithes/{tid} {
+        allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+        allow write: if isAdmin() && churchActive(churchId);
+      }
+
+      match /contribution_pools/{cid} {
+        allow read: if isMemberOf(churchId);
+        allow write: if isAdmin() && churchActive(churchId);
       }
     }
 
@@ -58,7 +76,6 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update, delete: if isAdmin();
 
-      // RSVP and attendance subcollections per church (optional future)
       match /{anySub=**} {
         allow read, write: if isSignedIn();
       }
