@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
-class BibleQuizScreen extends StatefulWidget {
+import '../../common/providers/tenant_providers.dart';
+import '../../common/providers/auth_providers.dart';
+import '../../common/services/leaderboard_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class BibleQuizScreen extends ConsumerStatefulWidget {
   const BibleQuizScreen({super.key});
   @override
-  State<BibleQuizScreen> createState() => _BibleQuizScreenState();
+  ConsumerState<BibleQuizScreen> createState() => _BibleQuizScreenState();
 }
 
-class _BibleQuizScreenState extends State<BibleQuizScreen> {
+class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
   int _q = 0;
   int _score = 0;
   bool _done = false;
@@ -41,6 +46,41 @@ class _BibleQuizScreenState extends State<BibleQuizScreen> {
     }
   }
 
+  Future<void> _submitScore() async {
+    final churchId = ref.read(activeChurchIdProvider);
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (churchId == null || user == null) return;
+    bool optIn = false;
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Submit Score'),
+        content: StatefulBuilder(
+          builder: (context, setState) => CheckboxListTile(
+            value: optIn,
+            onChanged: (v) => setState(() => optIn = v ?? false),
+            title: const Text('Opt-in to Global Leaderboard'),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Submit')),
+        ],
+      ),
+    );
+    await LeaderboardService().submitScore(
+      churchId: churchId,
+      userId: user.uid,
+      userName: user.displayName ?? 'User',
+      game: 'quiz',
+      score: _score,
+      optInGlobal: optIn,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Score submitted')));
+    }
+  }
+
   void _reset() {
     setState(() {
       _q = 0;
@@ -62,7 +102,9 @@ class _BibleQuizScreenState extends State<BibleQuizScreen> {
                   children: [
                     Text('Score: $_score / ${_questions.length}', style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 16),
-                    FilledButton(onPressed: _reset, child: const Text('Play Again')),
+                    FilledButton(onPressed: _submitScore, child: const Text('Submit Score')),
+                    const SizedBox(height: 12),
+                    OutlinedButton(onPressed: _reset, child: const Text('Play Again')),
                   ],
                 )
               : Column(

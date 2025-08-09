@@ -1,13 +1,18 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class VerseScrambleScreen extends StatefulWidget {
+import '../../common/providers/tenant_providers.dart';
+import '../../common/providers/auth_providers.dart';
+import '../../common/services/leaderboard_service.dart';
+
+class VerseScrambleScreen extends ConsumerStatefulWidget {
   const VerseScrambleScreen({super.key});
   @override
-  State<VerseScrambleScreen> createState() => _VerseScrambleScreenState();
+  ConsumerState<VerseScrambleScreen> createState() => _VerseScrambleScreenState();
 }
 
-class _VerseScrambleScreenState extends State<VerseScrambleScreen> {
+class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
   final _controller = TextEditingController();
   final _verses = const [
     'God is love',
@@ -34,10 +39,46 @@ class _VerseScrambleScreenState extends State<VerseScrambleScreen> {
     setState(() {});
   }
 
-  void _check() {
+  Future<void> _submitScore() async {
+    final churchId = ref.read(activeChurchIdProvider);
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (churchId == null || user == null) return;
+    bool optIn = false;
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Submit Score'),
+        content: StatefulBuilder(
+          builder: (context, setState) => CheckboxListTile(
+            value: optIn,
+            onChanged: (v) => setState(() => optIn = v ?? false),
+            title: const Text('Opt-in to Global Leaderboard'),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Submit')),
+        ],
+      ),
+    );
+    await LeaderboardService().submitScore(
+      churchId: churchId,
+      userId: user.uid,
+      userName: user.displayName ?? 'User',
+      game: 'scramble',
+      score: _score,
+      optInGlobal: optIn,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Score submitted')));
+    }
+  }
+
+  void _check() async {
     if (_controller.text.trim().toLowerCase() == _target) {
       _score++;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Correct!')));
+      await _submitScore();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Try again')));
     }

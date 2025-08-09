@@ -62,12 +62,26 @@ service cloud.firestore {
         allow read: if isMemberOf(churchId);
         allow write: if isAdmin() && churchActive(churchId);
       }
+
+      // Games Scores per church
+      match /games_scores/{scoreId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
     }
 
     // Domain mapping for web
     match /domains/{host} {
       allow read: if true; // public mapping host -> churchId
       allow write: if isAdmin();
+    }
+
+    // Global games leaderboard only stores opt-in submissions
+    match /global_games_scores/{scoreId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     // Interchurch Activities
