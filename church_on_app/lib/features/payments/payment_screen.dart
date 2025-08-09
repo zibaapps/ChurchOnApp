@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../common/providers/analytics_providers.dart';
 
 import '../../common/services/fees_service.dart';
 import '../../common/services/payment_service.dart';
@@ -66,6 +67,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 ? null
                 : () async {
                     setState(() => _loading = true);
+                    await ref.read(analyticsServiceProvider).logGiveStart(churchId: churchId!, userId: user.uid, amount: amt, method: 'mtn');
                     final res = await PaymentService().processPayment(
                       churchId: churchId,
                       amountZMW: amt,
@@ -77,6 +79,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     setState(() => _loading = false);
                     final msg = res.success ? 'MTN payment successful' : 'Payment failed: ${res.error}';
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                    if (res.success) {
+                      await ref.read(analyticsServiceProvider).logGiveSuccess(churchId: churchId!, userId: user.uid, amount: amt, method: 'mtn', reference: res.reference);
+                    }
                     if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
                   },
             icon: const Icon(Icons.payments),
@@ -90,6 +95,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 ? null
                 : () async {
                     setState(() => _loading = true);
+                    await ref.read(analyticsServiceProvider).logGiveStart(churchId: churchId!, userId: user.uid, amount: amt, method: 'airtel');
                     final res = await PaymentService().processPayment(
                       churchId: churchId,
                       amountZMW: amt,
@@ -101,6 +107,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     setState(() => _loading = false);
                     final msg = res.success ? 'Airtel payment successful' : 'Payment failed: ${res.error}';
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                    if (res.success) {
+                      await ref.read(analyticsServiceProvider).logGiveSuccess(churchId: churchId!, userId: user.uid, amount: amt, method: 'airtel', reference: res.reference);
+                    }
                     if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
                   },
             icon: const Icon(Icons.payments_outlined),
