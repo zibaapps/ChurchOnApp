@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../common/services/bible/bible_repository.dart';
+import '../../common/services/bible/bible_service.dart';
+import '../../common/providers/analytics_providers.dart';
+import '../../common/providers/auth_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BibleScreen extends StatefulWidget {
+class BibleScreen extends ConsumerStatefulWidget {
   const BibleScreen({super.key});
   @override
-  State<BibleScreen> createState() => _BibleScreenState();
+  ConsumerState<BibleScreen> createState() => _BibleScreenState();
 }
 
-class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStateMixin {
+class _BibleScreenState extends ConsumerState<BibleScreen> with SingleTickerProviderStateMixin {
   final FlutterTts _tts = FlutterTts();
   final BibleRepository _repo = BibleRepository();
   final List<String> _books = const ['Genesis', 'Psalms', 'John'];
@@ -44,6 +48,8 @@ class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStat
     }
     final verses = await _repo.getChapter(version: _version, book: _book, chapter: _chapter);
     setState(() => _verses = verses);
+    // analytics
+    await ref.read(analyticsServiceProvider).logBibleRead(version: _version, book: _book, chapter: _chapter);
   }
 
   @override
@@ -60,6 +66,7 @@ class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStat
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.0);
     setState(() => _speaking = true);
+    await ref.read(analyticsServiceProvider).logBibleTtsPlay(version: _version, book: _book, chapter: _chapter);
     for (final v in _filtered()) {
       if (!_speaking) break;
       await _tts.speak(v);
@@ -71,6 +78,41 @@ class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStat
   List<String> _filtered() => _query.isEmpty
       ? _verses
       : _verses.where((v) => v.toLowerCase().contains(_query.toLowerCase())).toList();
+
+  Future<void> _bookmark(int verseIndex) async {
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (user == null) return;
+    await BibleService().addBookmark(uid: user.uid, version: _version, book: _book, chapter: _chapter, verse: verseIndex + 1);
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bookmarked')));
+  }
+
+  Future<void> _highlight(int verseIndex) async {
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (user == null) return;
+    await BibleService().addHighlight(uid: user.uid, version: _version, book: _book, chapter: _chapter, verse: verseIndex + 1, colorHex: '#FFF59D');
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Highlighted')));
+  }
+
+  Future<void> _note(int verseIndex) async {
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (user == null) return;
+    final controller = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Note'),
+        content: TextField(controller: controller, maxLines: 4, decoration: const InputDecoration(hintText: 'Your note')), 
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (ok == true && controller.text.trim().isNotEmpty) {
+      await BibleService().addNote(uid: user.uid, version: _version, book: _book, chapter: _chapter, verse: verseIndex + 1, text: controller.text.trim());
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note added')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +191,11 @@ class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStat
                   itemBuilder: (context, i) => ListTile(
                     leading: CircleAvatar(child: Text('${i + 1}')),
                     title: Text(filtered[i]),
+                    trailing: Wrap(spacing: 8, children: [
+                      IconButton(tooltip: 'Bookmark', icon: const Icon(Icons.bookmark_add_outlined), onPressed: () => _bookmark(i)),
+                      IconButton(tooltip: 'Highlight', icon: const Icon(Icons.border_color_outlined), onPressed: () => _highlight(i)),
+                      IconButton(tooltip: 'Note', icon: const Icon(Icons.note_add_outlined), onPressed: () => _note(i)),
+                    ]),
                   ),
                 ),
               ),
