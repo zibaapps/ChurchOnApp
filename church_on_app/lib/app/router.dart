@@ -36,6 +36,7 @@ import '../features/chat/chat_room_screen.dart';
 import '../features/news/news_screen.dart';
 import '../features/reports/reports_screen.dart';
 import '../features/churches/nearby_churches_screen.dart';
+import '../features/games/bible_quiz_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -90,6 +91,7 @@ final router = GoRouter(
     GoRoute(path: '/admin/add-invite', builder: (c, s) => const AddInviteScreen()),
     GoRoute(path: '/connect/chat', builder: (c, s) => const ChatListScreen()),
     GoRoute(path: '/churches/nearby', builder: (c, s) => const NearbyChurchesScreen()),
+    GoRoute(path: '/connect/games', builder: (c, s) => const BibleQuizScreen()),
     GoRoute(path: '/chat/:id', builder: (c, s) => ChatRoomScreen(threadId: s.pathParameters['id']!)),
     GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
     GoRoute(path: '/connect/prayers', builder: (c, s) => const _PlaceholderPage(title: 'Prayer Requests')),

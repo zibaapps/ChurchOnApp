@@ -23,13 +23,14 @@ class SermonsTab extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final s = sermons[i];
+              final tag = 'sermon_${s.id}';
               return Card(
                 child: ListTile(
-                  leading: const Icon(Icons.play_circle_outline),
+                  leading: Hero(tag: tag, child: const Icon(Icons.play_circle_outline)),
                   title: Text(s.title),
                   subtitle: Text(s.mediaType.toUpperCase()),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/sermons/${s.id}'),
+                  onTap: () => context.push('/sermons/${s.id}', extra: tag),
                 ),
               );
             },

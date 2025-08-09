@@ -14,6 +14,7 @@ class ConnectTab extends StatelessWidget {
           _Tile('Chat Rooms', route: '/connect/chat'),
           _Tile('Testimonies', route: '/connect/testimonies'),
           _Tile('Prayer Requests', route: '/connect/prayers'),
+          _Tile('Bible Quiz (Games)', route: '/connect/games'),
         ],
       ),
     );

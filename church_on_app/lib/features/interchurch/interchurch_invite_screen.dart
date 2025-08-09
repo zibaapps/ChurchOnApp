@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../common/providers/church_directory_providers.dart';
 import '../../common/services/interchurch_service.dart';
+import '../../common/widgets/animations.dart';
 
 class InterchurchInviteScreen extends ConsumerStatefulWidget {
   const InterchurchInviteScreen({super.key, required this.activityId});
@@ -68,7 +69,8 @@ class _InterchurchInviteScreenState extends ConsumerState<InterchurchInviteScree
                     }
                     if (!mounted) return;
                     setState(() => _busy = false);
-                    Navigator.of(context).pop(true);
+                    if (mounted) await showSuccessAnimation(context, message: 'Invites sent');
+                    if (mounted) Navigator.of(context).pop(true);
                   },
           ),
         ),

@@ -35,6 +35,7 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tag = (ModalRoute.of(context)?.settings as dynamic).arguments as String?;
     return Scaffold(
       appBar: AppBar(title: const Text('Sermon')),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -74,13 +75,15 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
             }
             return AspectRatio(
               aspectRatio: _videoController!.value.aspectRatio,
-              child: VideoPlayer(_videoController!),
+              child: Hero(tag: tag ?? 'sermon_${sermon.id}', child: VideoPlayer(_videoController!)),
             );
           } else {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Hero(tag: tag ?? 'sermon_${sermon.id}', child: const Icon(Icons.play_circle_outline, size: 72)),
+                  const SizedBox(height: 12),
                   const Text('Audio sermon'),
                   const SizedBox(height: 12),
                   FilledButton(

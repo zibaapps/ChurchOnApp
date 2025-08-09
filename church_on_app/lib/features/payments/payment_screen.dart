@@ -5,6 +5,7 @@ import '../../common/services/fees_service.dart';
 import '../../common/services/payment_service.dart';
 import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/auth_providers.dart';
+import '../../common/widgets/animations.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   const PaymentScreen({super.key});
@@ -76,6 +77,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     setState(() => _loading = false);
                     final msg = res.success ? 'MTN payment successful' : 'Payment failed: ${res.error}';
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                    if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
                   },
             icon: const Icon(Icons.payments),
             label: _loading && _method == 'mtn'
@@ -99,6 +101,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     setState(() => _loading = false);
                     final msg = res.success ? 'Airtel payment successful' : 'Payment failed: ${res.error}';
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                    if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
                   },
             icon: const Icon(Icons.payments_outlined),
             label: _loading && _method == 'airtel'
