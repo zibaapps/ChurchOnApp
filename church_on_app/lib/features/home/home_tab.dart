@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../common/widgets/upcoming_strip.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -39,6 +40,8 @@ class _HomeTabState extends State<HomeTab> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const UpcomingStrip(),
+          const SizedBox(height: 12),
           _SuperadminAdsCarousel(controller: _pageController),
           const SizedBox(height: 16),
           FilledButton.icon(

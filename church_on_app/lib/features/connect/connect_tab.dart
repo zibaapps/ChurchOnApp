@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../common/widgets/upcoming_strip.dart';
+
 class ConnectTab extends StatelessWidget {
   const ConnectTab({super.key});
 
@@ -11,6 +13,8 @@ class ConnectTab extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
+          UpcomingStrip(),
+          SizedBox(height: 12),
           _Tile('Chat Rooms', route: '/connect/chat'),
           _Tile('Testimonies', route: '/connect/testimonies'),
           _Tile('Prayer Requests', route: '/connect/prayers'),
