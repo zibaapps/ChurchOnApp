@@ -116,7 +116,7 @@ class HomeTab extends ConsumerWidget {
         SliverToBoxAdapter(child: _SectionHeader(title: 'Latest News')),
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 120,
+            height: 140,
             child: news.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
@@ -130,10 +130,37 @@ class HomeTab extends ConsumerWidget {
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, i) {
                     final n = top[i];
-                    return _ChipCard(
-                      icon: Icons.article,
-                      title: n.headline,
-                      onTap: () => context.push('/news'),
+                    return SizedBox(
+                      width: 220,
+                      child: Card(
+                        child: InkWell(
+                          onTap: () => context.push('/news'),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.image, size: 28),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    n.headline,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     );
                   },
                 );
