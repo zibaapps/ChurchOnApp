@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+import '../../common/services/bible/bible_repository.dart';
 
 class BibleScreen extends StatefulWidget {
   const BibleScreen({super.key});
@@ -7,45 +10,75 @@ class BibleScreen extends StatefulWidget {
 }
 
 class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStateMixin {
-  final Map<String, List<String>> _bible = const {
-    'John': [
-      'In the beginning was the Word, and the Word was with God, and the Word was God.',
-      'He was with God in the beginning.',
-      'Through him all things were made; without him nothing was made that has been made.',
-    ],
-    'Psalm': [
-      'The Lord is my shepherd, I lack nothing.',
-      'He makes me lie down in green pastures, he leads me beside quiet waters,',
-      'he refreshes my soul.',
-    ],
-  };
+  final FlutterTts _tts = FlutterTts();
+  final BibleRepository _repo = BibleRepository();
+  final List<String> _books = const ['Genesis', 'Psalms', 'John'];
+  final List<String> _versions = const ['web']; // try NIV if licensed later
+
   late TabController _tab;
   String _book = 'John';
   int _chapter = 1;
   String _query = '';
+  String _version = 'web';
+  bool _downloading = false;
+  bool _speaking = false;
+  List<String> _verses = const [];
 
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 2, vsync: this);
+    _tab = TabController(length: 3, vsync: this);
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    await _loadChapter();
+  }
+
+  Future<void> _loadChapter() async {
+    final has = await _repo.hasBookCached(version: _version, book: _book);
+    if (!has) {
+      setState(() => _downloading = true);
+      await _repo.cacheBook(version: _version, book: _book);
+      setState(() => _downloading = false);
+    }
+    final verses = await _repo.getChapter(version: _version, book: _book, chapter: _chapter);
+    setState(() => _verses = verses);
   }
 
   @override
   void dispose() {
     _tab.dispose();
+    _tts.stop();
     super.dispose();
   }
 
+  Future<void> _speak() async {
+    if (_verses.isEmpty) return;
+    await _tts.setLanguage('en-US');
+    await _tts.setSpeechRate(0.45);
+    await _tts.setVolume(1.0);
+    await _tts.setPitch(1.0);
+    setState(() => _speaking = true);
+    for (final v in _filtered()) {
+      if (!_speaking) break;
+      await _tts.speak(v);
+      await _tts.awaitSpeakCompletion(true);
+    }
+    setState(() => _speaking = false);
+  }
+
+  List<String> _filtered() => _query.isEmpty
+      ? _verses
+      : _verses.where((v) => v.toLowerCase().contains(_query.toLowerCase())).toList();
+
   @override
   Widget build(BuildContext context) {
-    final verses = _bible[_book] ?? const <String>[];
-    final filtered = _query.isEmpty
-        ? verses
-        : verses.where((v) => v.toLowerCase().contains(_query.toLowerCase())).toList();
+    final filtered = _filtered();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bible & Resources'),
-        bottom: TabBar(controller: _tab, tabs: const [Tab(text: 'Read'), Tab(text: 'Resources')]),
+        bottom: TabBar(controller: _tab, tabs: const [Tab(text: 'Read'), Tab(text: 'Resources'), Tab(text: 'Plans')]),
       ),
       body: TabBarView(
         controller: _tab,
@@ -57,16 +90,53 @@ class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStat
                 child: Row(
                   children: [
                     DropdownButton<String>(
-                      value: _book,
-                      items: _bible.keys.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                      onChanged: (v) => setState(() => _book = v ?? 'John'),
+                      value: _version,
+                      items: _versions.map((v) => DropdownMenuItem(value: v, child: Text(v.toUpperCase()))).toList(),
+                      onChanged: (v) async {
+                        setState(() => _version = v ?? 'web');
+                        await _loadChapter();
+                      },
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      value: _book,
+                      items: _books.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                      onChanged: (v) async {
+                        setState(() => _book = v ?? 'John');
+                        await _loadChapter();
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: 'Download book',
+                      onPressed: _downloading
+                          ? null
+                          : () async {
+                              setState(() => _downloading = true);
+                              await _repo.cacheBook(version: _version, book: _book);
+                              setState(() => _downloading = false);
+                            },
+                      icon: _downloading
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.download)
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search in chapter', border: OutlineInputBorder()),
                         onChanged: (v) => setState(() => _query = v),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: _speaking ? 'Stop' : 'Play',
+                      onPressed: _speaking
+                          ? () {
+                              setState(() => _speaking = false);
+                              _tts.stop();
+                            }
+                          : _speak,
+                      icon: Icon(_speaking ? Icons.stop_circle_outlined : Icons.play_circle_outline),
                     ),
                   ],
                 ),
@@ -86,33 +156,23 @@ class _BibleScreenState extends State<BibleScreen> with SingleTickerProviderStat
           ),
           ListView(
             padding: const EdgeInsets.all(16),
-            children: [
-              ListTile(
-                leading: const Icon(Icons.menu_book),
-                title: const Text('YouVersion (Bible.com)'),
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _open(context, 'https://www.bible.com'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.library_books),
-                title: const Text('Bible Project'),
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _open(context, 'https://bibleproject.com'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.book_online),
-                title: const Text('Blue Letter Bible'),
-                trailing: const Icon(Icons.open_in_new),
-                onTap: () => _open(context, 'https://www.blueletterbible.org'),
-              ),
+            children: const [
+              ListTile(leading: Icon(Icons.menu_book), title: Text('YouVersion (Bible.com)'), trailing: Icon(Icons.open_in_new)),
+              ListTile(leading: Icon(Icons.book_online), title: Text('Blue Letter Bible'), trailing: Icon(Icons.open_in_new)),
+              ListTile(leading: Icon(Icons.interpreter_mode), title: Text('Greek/Hebrew Tools'), trailing: Icon(Icons.open_in_new)),
+              ListTile(leading: Icon(Icons.search), title: Text('Concordance (External)'), trailing: Icon(Icons.open_in_new)),
+            ],
+          ),
+          ListView(
+            padding: const EdgeInsets.all(16),
+            children: const [
+              ListTile(leading: Icon(Icons.today), title: Text('30-day New Testament Plan')),
+              ListTile(leading: Icon(Icons.auto_stories), title: Text('Psalms & Proverbs 60-day Plan')),
+              ListTile(leading: Icon(Icons.bedtime), title: Text('Daily Devotional: Morning & Evening')),
             ],
           ),
         ],
       ),
     );
-  }
-
-  void _open(BuildContext context, String url) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Open: $url')));
   }
 }

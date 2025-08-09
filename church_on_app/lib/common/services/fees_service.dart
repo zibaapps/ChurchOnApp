@@ -1,7 +1,7 @@
 class FeesService {
-  const FeesService({this.fixedFeeZMW = 0.5, this.percent = 0.05});
+  const FeesService({this.fixedFeeZMW = 0.5, this.percent = 0.005});
   final double fixedFeeZMW; // Minimum fee K0.50
-  final double percent; // 5%
+  final double percent; // 0.5%
 
   double computeFee(double amountZMW) {
     final pct = amountZMW * percent;
