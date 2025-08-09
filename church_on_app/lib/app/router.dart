@@ -22,6 +22,7 @@ import '../features/invites/invite_list_screen.dart';
 import '../features/admin/add_invite_screen.dart';
 import '../features/interchurch/interchurch_events_screen.dart';
 import '../features/interchurch/interchurch_projects_screen.dart';
+import '../features/interchurch/interchurch_invite_screen.dart';
 import '../features/programs/year_program_screen.dart';
 import '../features/moderation/moderation_screen.dart';
 import '../features/payments/payment_screen.dart';
@@ -79,6 +80,7 @@ final router = GoRouter(
     GoRoute(path: '/invites', builder: (c, s) => const InviteListScreen()),
     GoRoute(path: '/interchurch/events', builder: (c, s) => const InterchurchEventsScreen()),
     GoRoute(path: '/interchurch/projects', builder: (c, s) => const InterchurchProjectsScreen()),
+    GoRoute(path: '/interchurch/invite', builder: (c, s) => InterchurchInviteScreen(activityId: (s.extra as String?) ?? '')),
     GoRoute(path: '/programs/year', builder: (c, s) => const YearProgramScreen()),
     GoRoute(path: '/moderation', builder: (c, s) => const ModerationScreen()),
     GoRoute(path: '/payments', builder: (c, s) => const PaymentScreen()),

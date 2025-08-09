@@ -61,7 +61,16 @@ class InterchurchEventsScreen extends ConsumerWidget {
                     children: [
                       const Icon(Icons.groups, size: 18),
                       const SizedBox(width: 6),
-                      Text('$accepted')
+                      Text('$accepted'),
+                      IconButton(
+                        icon: const Icon(Icons.person_add_alt_1),
+                        onPressed: () {
+                          // Navigate to invite screen with draft activity id if needed
+                          // Here we don't have activity id mapping for legacy events; this is for new activities you create
+                          // Provide guidance via snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Use the + button to create an interchurch event, then invite churches.')));
+                        },
+                      ),
                     ],
                   ),
                 ),
