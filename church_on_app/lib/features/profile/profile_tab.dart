@@ -8,6 +8,7 @@ import '../../common/providers/config_providers.dart';
 import '../../common/services/security_service.dart';
 import 'emergency_contacts_screen.dart';
 import '../../common/providers/notifications_providers.dart';
+import '../../common/services/privacy_service.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -144,6 +145,26 @@ class ProfileTab extends ConsumerWidget {
                   title: const Text('Support & Docs'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/support'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.download),
+                  title: const Text('Request Data Export'),
+                  onTap: () async {
+                    await PrivacyService().requestExport();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export request submitted')));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever),
+                  title: const Text('Request Account Deletion'),
+                  onTap: () async {
+                    await PrivacyService().requestDeletion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deletion request submitted')));
+                    }
+                  },
                 ),
                 FilledButton.tonal(
                   onPressed: () => auth.signOut(),
