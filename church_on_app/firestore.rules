@@ -58,8 +58,20 @@ service cloud.firestore {
       }
 
       match /reports/{docId} {
-        allow read: if hasRole(churchId, 'admin') || isSuperAdmin();
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+        // Authors and admins can read; pastors create pastor reports; board leaders see board; bishops see pastor reports assigned to them
+        allow read: if
+          hasRole(churchId, 'admin') ||
+          isSuperAdmin() ||
+          (isMember(churchId) && request.auth.uid == resource.data.createdBy) ||
+          (hasRole(churchId, 'boardLeader') && resource.data.visibility == 'board') ||
+          (hasRole(churchId, 'bishop') && resource.data.visibility == 'bishop' && resource.data.assignedLeaderChurchId == churchId);
+
+        allow create: if
+          hasRole(churchId, 'admin') ||
+          hasRole(churchId, 'pastor') ||
+          isSuperAdmin();
+
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
       match /payments/{docId} {

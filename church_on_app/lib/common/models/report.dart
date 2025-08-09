@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 
 enum ReportType { secretary, usher, treasurer, pastor, other }
 
+enum ReportVisibility { churchOnly, board, bishop, interchurch }
+
 class ChurchReport extends Equatable {
   const ChurchReport({
     required this.id,
@@ -14,6 +16,8 @@ class ChurchReport extends Equatable {
     this.periodEnd,
     required this.createdAt,
     this.createdBy,
+    this.assignedLeaderChurchId,
+    this.visibility = ReportVisibility.churchOnly,
   });
 
   final String id;
@@ -26,6 +30,8 @@ class ChurchReport extends Equatable {
   final DateTime? periodEnd;
   final DateTime createdAt;
   final String? createdBy;
+  final String? assignedLeaderChurchId; // For bishop/interchurch leader oversight
+  final ReportVisibility visibility; // Scope
 
   Map<String, dynamic> toMap() => {
         'churchId': churchId,
@@ -37,6 +43,8 @@ class ChurchReport extends Equatable {
         'periodEnd': periodEnd?.toUtc().toIso8601String(),
         'createdAt': createdAt.toUtc().toIso8601String(),
         'createdBy': createdBy,
+        'assignedLeaderChurchId': assignedLeaderChurchId,
+        'visibility': visibility.name,
       };
 
   factory ChurchReport.fromDoc(String id, Map<String, dynamic> map) => ChurchReport(
@@ -53,8 +61,13 @@ class ChurchReport extends Equatable {
         periodEnd: (map['periodEnd'] as String?) != null ? (DateTime.tryParse(map['periodEnd'] as String)?.toLocal()) : null,
         createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '')?.toLocal() ?? DateTime.now(),
         createdBy: map['createdBy'] as String?,
+        assignedLeaderChurchId: map['assignedLeaderChurchId'] as String?,
+        visibility: ReportVisibility.values.firstWhere(
+          (v) => v.name == (map['visibility'] as String? ?? 'churchOnly'),
+          orElse: () => ReportVisibility.churchOnly,
+        ),
       );
 
   @override
-  List<Object?> get props => [id, churchId, type, title, createdAt];
+  List<Object?> get props => [id, churchId, type, title, createdAt, visibility, assignedLeaderChurchId];
 }
