@@ -6,7 +6,7 @@ try { admin.initializeApp(); } catch (_) {}
 const db = admin.firestore();
 
 function computeFee(amount) {
-  const pct = amount * 0.05;
+  const pct = amount * 0.005; // 0.5%
   return pct < 0.5 ? 0.5 : pct;
 }
 
