@@ -153,10 +153,25 @@ exports.generateThumbnail = functions.https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
   const { collection, churchId, docId, title } = data || {};
   if (!collection || !churchId || !docId) throw new functions.https.HttpsError('invalid-argument', 'Missing fields');
-  // TODO: call real image generation provider; for now, create a placeholder URL using a service (e.g., dummyimage.com)
-  const encoded = encodeURIComponent((title || 'Sermon').slice(0, 30));
-  const url = `https://dummyimage.com/600x338/6750A4/ffffff&text=${encoded}`;
+
   const ref = db.collection('churches').doc(churchId).collection(collection).doc(docId);
-  await ref.update({ thumbnailUrl: url, imageUrl: url, updatedAt: new Date().toISOString() });
+  const snap = await ref.get();
+  if (!snap.exists) throw new functions.https.HttpsError('not-found', 'Document not found');
+  const d = snap.data() || {};
+
+  // If already has a thumbnail or an image (news), or previously generated, return existing and do not overwrite
+  if (d.thumbnailUrl || d.imageUrl || d.thumbnailGenerated) {
+    return { url: d.thumbnailUrl || d.imageUrl || null, skipped: true };
+  }
+
+  // TODO: call real image generation provider; for now, create a placeholder URL using a service (e.g., dummyimage.com)
+  const encoded = encodeURIComponent((title || d.title || 'Image').toString().slice(0, 30));
+  const url = `https://dummyimage.com/600x338/6750A4/ffffff&text=${encoded}`;
+
+  const update = { updatedAt: new Date().toISOString(), thumbnailGenerated: true };
+  if (collection === 'sermons') update.thumbnailUrl = url;
+  if (collection === 'news') update.imageUrl = url;
+
+  await ref.update(update);
   return { url };
 });
