@@ -5,26 +5,73 @@ import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/auth_providers.dart';
 import '../../common/services/leaderboard_service.dart';
 
-class LeaderboardScreen extends ConsumerWidget {
+class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LeaderboardScreen> createState() => _LeaderboardScreenState();
+}
+
+class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with SingleTickerProviderStateMixin {
+  String _timeframe = 'all'; // all | week | month
+  String _game = 'all'; // all | quiz | memory | scramble
+  late final TabController _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final churchId = ref.watch(activeChurchIdProvider);
     final user = ref.watch(currentUserStreamProvider).valueOrNull;
     final svc = LeaderboardService();
-    final churchStream = churchId == null ? const Stream<List<Map<String, dynamic>>>.empty() : svc.streamChurchTopAggregated(churchId);
-    final globalStream = svc.streamGlobalTopAggregated();
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Leaderboard'),
-          bottom: const TabBar(tabs: [Tab(text: 'My Church'), Tab(text: 'Global')]),
-        ),
-        body: TabBarView(children: [
+    final churchStream = churchId == null
+        ? const Stream<List<Map<String, dynamic>>>.empty()
+        : svc.streamChurchTopAggregated(churchId, game: _game, timeframe: _timeframe);
+    final globalStream = svc.streamGlobalTopAggregated(game: _game, timeframe: _timeframe);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Leaderboard'),
+        bottom: TabBar(controller: _tabs, tabs: const [Tab(text: 'My Church'), Tab(text: 'Global')]),
+        actions: [
+          PopupMenuButton<String>(
+            initialValue: _timeframe,
+            onSelected: (v) => setState(() => _timeframe = v),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'all', child: Text('All Time')),
+              PopupMenuItem(value: 'week', child: Text('This Week')),
+              PopupMenuItem(value: 'month', child: Text('This Month')),
+            ],
+            icon: const Icon(Icons.filter_alt),
+          ),
+          PopupMenuButton<String>(
+            initialValue: _game,
+            onSelected: (v) => setState(() => _game = v),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'all', child: Text('All Games')),
+              PopupMenuItem(value: 'quiz', child: Text('Quiz')),
+              PopupMenuItem(value: 'memory', child: Text('Memory')),
+              PopupMenuItem(value: 'scramble', child: Text('Scramble')),
+            ],
+            icon: const Icon(Icons.sports_esports),
+          ),
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabs,
+        children: [
           _Board(stream: churchStream),
           _Board(stream: globalStream, showOptInHint: user != null),
-        ]),
+        ],
       ),
     );
   }
