@@ -46,9 +46,29 @@ service cloud.firestore {
       }
     }
 
+    // Domain mapping for web
     match /domains/{host} {
       allow read: if true; // public mapping host -> churchId
       allow write: if isAdmin();
+    }
+
+    // Interchurch Activities
+    match /interchurch_activities/{activityId} {
+      allow read: if true; // client filters by visibility and membership
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+
+      // RSVP and attendance subcollections per church (optional future)
+      match /{anySub=**} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // Year Program Entries (flat collection powering Programs screen)
+    match /year_program_entries/{entryId} {
+      allow read: if true; // client filters by status and participants
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
     }
   }
 }
