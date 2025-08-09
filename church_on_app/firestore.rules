@@ -71,6 +71,22 @@ service cloud.firestore {
       }
     }
 
+    // Interchurch Activities (leadChurchId field controls admin)
+    match /interchurch_activities/{activityId} {
+      allow read: if true; // public listings; app filters visibility
+      allow create, update, delete: if isSuperAdmin() || (isSignedIn() && hasRole(request.resource.data.leadChurchId, 'admin'));
+      match /{sub=**} {
+        allow read: if isSignedIn();
+        allow write: if isSuperAdmin() || (isSignedIn() && hasRole(resource.data.leadChurchId, 'admin'));
+      }
+    }
+
+    // Year Program Entries (churchId field controls ownership)
+    match /year_program_entries/{entryId} {
+      allow read: if true;
+      allow create, update, delete: if isSuperAdmin() || (isSignedIn() && hasRole(request.resource.data.churchId, 'admin'));
+    }
+
     // Superadmin ledger
     match /superadmin_ledger/{docId} {
       allow read, write: if isSuperAdmin();
