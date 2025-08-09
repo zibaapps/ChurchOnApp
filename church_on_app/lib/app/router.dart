@@ -44,6 +44,7 @@ import '../features/give/tithes_admin_screen.dart';
 import '../features/bible/bible_screen.dart';
 import '../features/bible/bible_cache_screen.dart';
 import '../features/support/support_screen.dart';
+import '../features/support/report_problem_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -112,6 +113,7 @@ final router = GoRouter(
     GoRoute(path: '/bible', builder: (c, s) => const BibleScreen()),
     GoRoute(path: '/bible/cache', builder: (c, s) => const BibleCacheScreen()),
     GoRoute(path: '/support', builder: (c, s) => const SupportScreen()),
+    GoRoute(path: '/support/report', builder: (c, s) => const ReportProblemScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),
