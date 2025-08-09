@@ -25,8 +25,18 @@ service cloud.firestore {
         allow write: if uid() == userId || hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
+      match /tenant_settings/{docId} {
+        allow read: if true;
+        allow write: if hasRole(churchId, 'admin') || isSuperAdmin();
+      }
+
+      match /invites/{inviteId} {
+        allow read: if true;
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+      }
+
       match /sermons/{docId} {
-        allow read: if isMember(churchId) || true; // allow public read of sermons
+        allow read: if true; // public read of sermons
         allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
@@ -60,7 +70,7 @@ service cloud.firestore {
       }
 
       match /contribution_pools/{docId} {
-        allow read: if isMember(churchId) || true;
+        allow read: if true;
         allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
@@ -69,6 +79,32 @@ service cloud.firestore {
         allow create, update: if uid() == request.resource.data.userId || hasRole(churchId, 'pastor') || hasRole(churchId, 'admin') || isSuperAdmin();
         allow delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
+
+      // Chat threads & messages
+      match /chat_threads/{threadId} {
+        allow read: if isMember(churchId);
+        allow create: if isMember(churchId);
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+        match /messages/{messageId} {
+          allow read: if isMember(churchId);
+          allow create: if isMember(churchId) && uid() == request.resource.data.userId;
+          allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin() || uid() == resource.data.userId;
+        }
+      }
+
+      // Per-church game scores
+      match /games_scores/{scoreId} {
+        allow read: if true;
+        allow create: if isMember(churchId) && uid() == request.resource.data.userId;
+        allow update, delete: if false;
+      }
+    }
+
+    // Global games leaderboard only stores opt-in submissions
+    match /global_games_scores/{scoreId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     // Interchurch Activities (leadChurchId field controls admin)
@@ -85,6 +121,18 @@ service cloud.firestore {
     match /year_program_entries/{entryId} {
       allow read: if true;
       allow create, update, delete: if isSuperAdmin() || (isSignedIn() && hasRole(request.resource.data.churchId, 'admin'));
+    }
+
+    // Domain mapping for web
+    match /domains/{host} {
+      allow read: if true; // public mapping host -> churchId
+      allow write: if isSuperAdmin();
+    }
+
+    // Superadmin ads and content
+    match /superadmin_ads/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
     }
 
     // Superadmin ledger

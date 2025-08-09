@@ -1,71 +1,54 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../common/widgets/upcoming_strip.dart';
+import '../../common/widgets/app_logo.dart';
+import '../../common/providers/tenant_info_providers.dart';
 
-class HomeTab extends StatefulWidget {
+class HomeTab extends ConsumerWidget {
   const HomeTab({super.key});
 
   @override
-  State<HomeTab> createState() => _HomeTabState();
-}
-
-class _HomeTabState extends State<HomeTab> {
-  final _pageController = PageController(viewportFraction: 0.9);
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (t) {
-      if (!_pageController.hasClients) return;
-      final next = ((_pageController.page ?? 0).round() + 1) % 5;
-      _pageController.animateToPage(next, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const UpcomingStrip(),
-          const SizedBox(height: 12),
-          _SuperadminAdsCarousel(controller: _pageController),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () => context.push('/ar/scan'),
-            icon: const Icon(Icons.qr_code_scanner),
-            label: const Text('AR Church Experience'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = ref.watch(tenantDisplayNameProvider);
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          expandedHeight: 180,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Container(
+              padding: const EdgeInsets.only(top: 40),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const AppLogo(size: 72),
+                  const SizedBox(height: 8),
+                  Text(name, style: Theme.of(context).textTheme.titleLarge),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-          const _Section(title: 'Featured Sermon'),
-          const SizedBox(height: 12),
-          const _Section(title: 'Upcoming Events'),
-          const SizedBox(height: 12),
-          const _Section(title: 'Announcements'),
-          const SizedBox(height: 12),
-          const _Section(title: 'Church News'),
-          const SizedBox(height: 12),
-          ListTile(
-            leading: const Icon(Icons.description),
-            title: const Text('Church Reports'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/reports'),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverGrid.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            children: [
+              _QuickCard(icon: Icons.play_circle, label: 'Sermons', onTap: () => context.push('/sermons/featured')),
+              _QuickCard(icon: Icons.event, label: 'Events', onTap: () => context.push('/events')),
+              _QuickCard(icon: Icons.volunteer_activism, label: 'Give', onTap: () => context.push('/payments')),
+              _QuickCard(icon: Icons.forum, label: 'Connect', onTap: () => context.push('/connect/chat')),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -148,6 +131,32 @@ class _Section extends StatelessWidget {
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.all(16),
       child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+}
+
+class _QuickCard extends StatelessWidget {
+  const _QuickCard({required this.icon, required this.label, required this.onTap});
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 36),
+              const SizedBox(height: 8),
+              Text(label),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
