@@ -2,107 +2,78 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
-    function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superAdmin'];
-    }
-    function isMemberOf(churchId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)/memberships/$(churchId));
-    }
-    function userChurchId(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data.churchId;
-    }
-    function churchActive(chId) {
-      return get(/databases/$(database)/documents/churches/$(chId)).data.active == true;
+    function uid() { return request.auth.uid; }
+    function isSuperAdmin() { return isSignedIn() && (request.auth.token.role == 'superadmin'); }
+
+    // Membership-based access
+    function isMember(churchId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/churches/$(churchId)/memberships/$(uid()));
     }
 
-    match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-      allow write: if isSignedIn() && request.auth.uid == uid;
+    function hasRole(churchId, role) {
+      return isMember(churchId) && get(/databases/$(database)/documents/churches/$(churchId)/memberships/$(uid())).data.role == role;
     }
 
+    // Churches collection
     match /churches/{churchId} {
-      allow read: if true;
-      allow write: if isAdmin() && isMemberOf(churchId);
+      allow read: if true; // public metadata
+      allow write: if isSuperAdmin();
 
-      // Zip Mode metadata on church doc
-      allow update: if isAdmin() && isMemberOf(churchId);
+      // Subcollections
+      match /memberships/{userId} {
+        allow read: if isMember(churchId) || isSuperAdmin();
+        allow write: if uid() == userId || hasRole(churchId, 'admin') || isSuperAdmin();
+      }
 
-      match /sermons/{sid} {
+      match /sermons/{docId} {
+        allow read: if isMember(churchId) || true; // allow public read of sermons
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+      }
+
+      match /events/{docId} {
         allow read: if true;
-        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+        // RSVP field updates allowed to members on the attendees map
+        allow update: if isMember(churchId) && request.resource.data.diff(resource.data).changedKeys().hasOnly(['attendees']);
       }
 
-      match /events/{eid} {
+      match /announcements/{docId} {
         allow read: if true;
-        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
-      match /announcements/{aid} {
-        allow read: if resource.data.status == 'published' || (isMemberOf(churchId) && isAdmin());
-        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
+      match /news/{docId} {
+        allow read: if resource.data.status == 'published' || hasRole(churchId, 'admin') || isSuperAdmin();
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
-      match /news/{nid} {
-        allow read: if resource.data.status == 'published' || (isMemberOf(churchId) && isAdmin());
-        allow write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
+      match /reports/{docId} {
+        allow read: if hasRole(churchId, 'admin') || isSuperAdmin();
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
-      match /reports/{rid} {
-        allow read, write: if isMemberOf(churchId) && isAdmin() && churchActive(churchId);
+      match /payments/{docId} {
+        allow read: if uid() == resource.data.userId || hasRole(churchId, 'admin') || isSuperAdmin();
+        allow create: if isMember(churchId) && uid() == request.resource.data.userId;
+        allow update: if isSuperAdmin(); // Webhooks via Admin SDK
+        allow delete: if false;
       }
 
-      match /payments/{pid} {
-        allow read: if isMemberOf(churchId);
-        allow write: if isMemberOf(churchId) && churchActive(churchId);
+      match /contribution_pools/{docId} {
+        allow read: if isMember(churchId) || true;
+        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
-      match /tithes/{tid} {
-        allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-        allow write: if isAdmin() && churchActive(churchId);
-      }
-
-      match /contribution_pools/{cid} {
-        allow read: if isMemberOf(churchId);
-        allow write: if isAdmin() && churchActive(churchId);
-      }
-
-      // Games Scores per church
-      match /games_scores/{scoreId} {
-        allow read: if true;
-        allow create: if isSignedIn();
-        allow update, delete: if false;
+      match /tithes/{docId} {
+        allow read: if uid() == resource.data.userId || hasRole(churchId, 'pastor') || hasRole(churchId, 'admin') || isSuperAdmin();
+        allow create, update: if uid() == request.resource.data.userId || hasRole(churchId, 'pastor') || hasRole(churchId, 'admin') || isSuperAdmin();
+        allow delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
     }
 
-    // Domain mapping for web
-    match /domains/{host} {
-      allow read: if true; // public mapping host -> churchId
-      allow write: if isAdmin();
-    }
-
-    // Global games leaderboard only stores opt-in submissions
-    match /global_games_scores/{scoreId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false;
-    }
-
-    // Interchurch Activities
-    match /interchurch_activities/{activityId} {
-      allow read: if true; // client filters by visibility and membership
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
-
-      match /{anySub=**} {
-        allow read, write: if isSignedIn();
-      }
-    }
-
-    // Year Program Entries (flat collection powering Programs screen)
-    match /year_program_entries/{entryId} {
-      allow read: if true; // client filters by status and participants
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
+    // Superadmin ledger
+    match /superadmin_ledger/{docId} {
+      allow read, write: if isSuperAdmin();
     }
   }
 }
