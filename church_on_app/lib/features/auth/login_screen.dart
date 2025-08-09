@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../common/providers/auth_providers.dart';
 
@@ -15,6 +17,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _loading = false;
   bool _isRegister = false;
+  bool _rememberMe = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSaved();
+  }
+
+  Future<void> _loadSaved() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('saved_email');
+    if (email != null && email.isNotEmpty) {
+      _emailController.text = email;
+    }
+  }
 
   Future<void> _handleSubmit() async {
     final email = _emailController.text.trim();
@@ -32,6 +49,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await auth.signInWithEmail(email, password);
       }
       if (!mounted) return;
+      if (_rememberMe) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_email', email);
+      }
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -57,7 +78,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             TextField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
             const SizedBox(height: 12),
             TextField(controller: _passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
-            const SizedBox(height: 24),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _rememberMe,
+              onChanged: (v) => setState(() => _rememberMe = v ?? true),
+              title: const Text('Remember me'),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  TextButton(onPressed: () => context.push('/support'), child: const Text('Terms & Conditions')),
+                  TextButton(onPressed: () => context.push('/support'), child: const Text('Privacy Policy')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             FilledButton(
               onPressed: _loading ? null : _handleSubmit,
               child: _loading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(_isRegister ? 'Create account' : 'Continue'),
