@@ -104,6 +104,12 @@ class ProfileTab extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmergencyContactsScreen())),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.help_center),
+                  title: const Text('Support & Docs'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/support'),
+                ),
                 FilledButton.tonal(
                   onPressed: () => auth.signOut(),
                   child: const Text('Sign out'),
