@@ -7,6 +7,7 @@ import '../../common/services/payment_service.dart';
 import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/auth_providers.dart';
 import '../../common/widgets/animations.dart';
+import '../../common/services/fx_service.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   const PaymentScreen({super.key});
@@ -20,6 +21,25 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   final _msisdn = TextEditingController();
   String _method = 'mtn'; // mtn | airtel | paypal
   bool _loading = false;
+  String? _fxUsd; // USD equivalent text
+  bool _fxLoading = false;
+
+  Future<void> _refreshFx() async {
+    final amt = double.tryParse(_amount.text) ?? 0;
+    if (amt <= 0) {
+      setState(() => _fxUsd = null);
+      return;
+    }
+    setState(() => _fxLoading = true);
+    final rate = await FxService().fetchRate(base: 'ZMW', target: 'USD');
+    if (!mounted) return;
+    if (rate != null) {
+      setState(() => _fxUsd = FxService().formatEquivalent(amt, rate, 'USD'));
+    } else {
+      setState(() => _fxUsd = null);
+    }
+    setState(() => _fxLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +64,15 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextFormField(controller: _amount, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Amount (ZMW)'), onChanged: (_) => setState(() {})),
+          TextFormField(
+            controller: _amount,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Amount (ZMW)'),
+            onChanged: (_) async {
+              setState(() {});
+              await _refreshFx();
+            },
+          ),
           const SizedBox(height: 12),
           TextFormField(controller: _msisdn, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Mobile number (MSISDN)')),
           const SizedBox(height: 12),
@@ -60,6 +88,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           const SizedBox(height: 16),
           Text('Fee: K${fee.toStringAsFixed(2)}'),
           Text('Net to church: K${net.toStringAsFixed(2)}'),
+          if (_fxLoading) const Padding(padding: EdgeInsets.only(top: 8), child: SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))),
+          if (!_fxLoading && _fxUsd != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('Approx: $_fxUsd')),
           const SizedBox(height: 24),
           FilledButton.icon(
             style: FilledButton.styleFrom(backgroundColor: _method == 'mtn' ? Theme.of(context).colorScheme.primary : null),
