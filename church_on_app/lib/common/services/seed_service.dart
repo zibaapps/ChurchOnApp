@@ -8,6 +8,13 @@ class SeedService {
     final batch = _firestore.batch();
     final churchRef = _firestore.collection('churches').doc(churchId);
 
+    // Ensure basic tenant document exists
+    batch.set(churchRef, {
+      'id': churchId,
+      'name': 'Church $churchId',
+      'createdAt': DateTime.now().toUtc().toIso8601String(),
+    }, SetOptions(merge: true));
+
     // Sample users and memberships
     final users = [
       {'uid': 'user1', 'email': 'alice@example.com', 'displayName': 'Alice', 'role': 'user', 'password': 'password123'},
@@ -112,5 +119,19 @@ class SeedService {
     }
 
     await batch.commit();
+  }
+
+  Future<void> seedDummyTenants() async {
+    final ids = ['tenant_alpha', 'tenant_bethesda', 'tenant_carmel'];
+    for (final id in ids) {
+      await _firestore.collection('churches').doc(id).set({
+        'id': id,
+        'name': id.replaceAll('_', ' ').toUpperCase(),
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      }, SetOptions(merge: true));
+      await _firestore.collection('domain_map').doc('$id.churchapp.cloud').set({'churchId': id});
+      await _firestore.collection('churches').doc(id).collection('tenant_settings').doc('billing').set({'plan': 'free'});
+      await seedTenant(id);
+    }
   }
 }
