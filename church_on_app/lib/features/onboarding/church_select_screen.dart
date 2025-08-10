@@ -28,8 +28,14 @@ class ChurchSelectScreen extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final data = docs[index].data();
+              final iconUrl = data['iconUrl']?.toString();
               return Card(
                 child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                    backgroundImage: iconUrl != null && iconUrl.isNotEmpty ? NetworkImage(iconUrl) : null,
+                    child: (iconUrl == null || iconUrl.isEmpty) ? const Icon(Icons.church) : null,
+                  ),
                   title: Text(data['name'] ?? 'Unnamed'),
                   subtitle: Text(data['city'] ?? ''),
                   onTap: () async {
