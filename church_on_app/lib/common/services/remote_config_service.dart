@@ -9,7 +9,7 @@ class RemoteConfigService {
       'domain': 'churchapp.cloud',
       'supportEmail': 'support@churchapp.cloud',
       'supportPhone': '+260955202036',
-      'themeSeed': '#5A3AFF',
+      'themeSeed': '#212F4C',
     });
     await _rc.fetchAndActivate();
   }

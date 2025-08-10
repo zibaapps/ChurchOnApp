@@ -38,6 +38,12 @@ class NewsService {
     await _firestore.collection('churches').doc(churchId).collection('news').add(n.toMap());
   }
 
+  Future<String> addNewsReturnId(String churchId, NewsItem n) async {
+    await ZipModeService().guardWrite(churchId);
+    final doc = await _firestore.collection('churches').doc(churchId).collection('news').add(n.toMap());
+    return doc.id;
+  }
+
   Future<void> updateStatus(String churchId, String id, PublishStatus status) async {
     await ZipModeService().guardWrite(churchId);
     await _firestore.collection('churches').doc(churchId).collection('news').doc(id).update({'status': status.name});

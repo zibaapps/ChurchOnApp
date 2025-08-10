@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AdminPanelScreen extends StatelessWidget {
+import '../../common/providers/tenant_providers.dart';
+import '../../common/services/seed_service.dart';
+
+class AdminPanelScreen extends ConsumerWidget {
   const AdminPanelScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final churchId = ref.watch(activeChurchIdProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Panel')),
       body: ListView(
@@ -70,6 +75,19 @@ class AdminPanelScreen extends StatelessWidget {
             title: const Text('Tenant Settings'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/admin/tenant-settings'),
+          ),
+          const Divider(height: 32),
+          FilledButton.tonalIcon(
+            onPressed: churchId == null
+                ? null
+                : () async {
+                    await SeedService().seedTenant(churchId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sample data seeded')));
+                    }
+                  },
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('Seed Sample Data (Dev)'),
           ),
         ],
       ),

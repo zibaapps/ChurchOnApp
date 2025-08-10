@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../common/widgets/upcoming_strip.dart';
-
 class ConnectTab extends StatelessWidget {
   const ConnectTab({super.key});
 
@@ -10,36 +8,48 @@ class ConnectTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Connect')),
-      body: ListView(
+      body: GridView.count(
         padding: const EdgeInsets.all(16),
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
         children: const [
-          UpcomingStrip(),
-          SizedBox(height: 12),
-          _Tile('Chat Rooms', route: '/connect/chat'),
-          _Tile('Testimonies', route: '/connect/testimonies'),
-          _Tile('Prayer Requests', route: '/connect/prayers'),
-          _Tile('Bible Quiz (Games)', route: '/connect/games'),
-          _Tile('Memory Match', route: '/connect/games/memory'),
-          _Tile('Verse Scramble', route: '/connect/games/scramble'),
-          _Tile('Leaderboard', route: '/connect/games/leaderboard'),
+          _CardTile(icon: Icons.forum, label: 'Chat Rooms', route: '/connect/chat', color: Colors.indigo),
+          _CardTile(icon: Icons.volunteer_activism, label: 'Testimonies', route: '/connect/testimonies', color: Colors.green),
+          _CardTile(icon: Icons.hail, label: 'Prayer Requests', route: '/connect/prayers', color: Colors.purple),
+          _CardTile(icon: Icons.sports_esports, label: 'Bible Quiz', route: '/connect/games', color: Colors.orange),
+          _CardTile(icon: Icons.extension, label: 'Memory Match', route: '/connect/games/memory', color: Colors.teal),
+          _CardTile(icon: Icons.shuffle, label: 'Verse Scramble', route: '/connect/games/scramble', color: Colors.pink),
+          _CardTile(icon: Icons.emoji_events, label: 'Leaderboard', route: '/connect/games/leaderboard', color: Colors.blue),
         ],
       ),
     );
   }
 }
 
-class _Tile extends StatelessWidget {
-  const _Tile(this.title, {this.route});
-  final String title;
-  final String? route;
+class _CardTile extends StatelessWidget {
+  const _CardTile({required this.icon, required this.label, required this.route, required this.color});
+  final IconData icon;
+  final String label;
+  final String route;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        title: Text(title),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: route == null ? null : () => context.go(route!),
+      color: color.withOpacity(0.15),
+      child: InkWell(
+        onTap: () => context.go(route),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(backgroundColor: color, child: Icon(icon, color: Colors.white)),
+              const SizedBox(height: 8),
+              Text(label),
+            ],
+          ),
+        ),
       ),
     );
   }

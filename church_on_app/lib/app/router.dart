@@ -35,6 +35,7 @@ import '../features/chat/chat_list_screen.dart';
 import '../features/chat/chat_room_screen.dart';
 import '../features/news/news_screen.dart';
 import '../features/reports/reports_screen.dart';
+import '../features/reports/service_issues_screen.dart';
 import '../features/churches/nearby_churches_screen.dart';
 import '../features/games/bible_quiz_screen.dart';
 import '../features/games/memory_match_screen.dart';
@@ -42,7 +43,11 @@ import '../features/games/verse_scramble_screen.dart';
 import '../features/games/leaderboard_screen.dart';
 import '../features/give/tithes_admin_screen.dart';
 import '../features/bible/bible_screen.dart';
+import '../features/bible/bible_cache_screen.dart';
+import '../features/bible/reading_plans_screen.dart';
 import '../features/support/support_screen.dart';
+import '../features/support/report_problem_screen.dart';
+import '../features/search/search_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -108,8 +113,13 @@ final router = GoRouter(
     GoRoute(path: '/announcements', builder: (c, s) => const AnnouncementsScreen()),
     GoRoute(path: '/news', builder: (c, s) => const NewsScreen()),
     GoRoute(path: '/reports', builder: (c, s) => const ReportsScreen()),
+    GoRoute(path: '/reports/issues', builder: (c, s) => const ServiceIssuesScreen()),
     GoRoute(path: '/bible', builder: (c, s) => const BibleScreen()),
+    GoRoute(path: '/bible/cache', builder: (c, s) => const BibleCacheScreen()),
+    GoRoute(path: '/bible/plans', builder: (c, s) => const ReadingPlansScreen()),
     GoRoute(path: '/support', builder: (c, s) => const SupportScreen()),
+    GoRoute(path: '/support/report', builder: (c, s) => const ReportProblemScreen()),
+    GoRoute(path: '/search', builder: (c, s) => const SearchScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),

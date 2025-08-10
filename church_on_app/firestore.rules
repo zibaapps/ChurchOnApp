@@ -58,8 +58,20 @@ service cloud.firestore {
       }
 
       match /reports/{docId} {
-        allow read: if hasRole(churchId, 'admin') || isSuperAdmin();
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+        // Authors and admins can read; pastors create pastor reports; board leaders see board; bishops see pastor reports assigned to them
+        allow read: if
+          hasRole(churchId, 'admin') ||
+          isSuperAdmin() ||
+          (isMember(churchId) && request.auth.uid == resource.data.createdBy) ||
+          (hasRole(churchId, 'boardLeader') && resource.data.visibility == 'board') ||
+          (hasRole(churchId, 'bishop') && resource.data.visibility == 'bishop' && resource.data.assignedLeaderChurchId == churchId);
+
+        allow create: if
+          hasRole(churchId, 'admin') ||
+          hasRole(churchId, 'pastor') ||
+          isSuperAdmin();
+
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
 
       match /payments/{docId} {
@@ -97,6 +109,12 @@ service cloud.firestore {
         allow read: if true;
         allow create: if isMember(churchId) && uid() == request.resource.data.userId;
         allow update, delete: if false;
+      }
+
+      match /service_issues/{docId} {
+        allow read: if isMember(churchId) || isSuperAdmin();
+        allow create: if isMember(churchId);
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
       }
     }
 

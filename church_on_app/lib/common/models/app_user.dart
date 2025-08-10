@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum AppRole { guest, user, admin, superAdmin }
+enum AppRole { guest, user, pastor, bishop, boardLeader, admin, superAdmin }
 
 class AppUser extends Equatable {
   const AppUser({

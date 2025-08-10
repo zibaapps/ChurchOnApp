@@ -46,7 +46,7 @@ Domain: churchapp.cloud | Support: support@churchapp.cloud | Phone: +26095520203
 - Ads/ledger/global scores readable
 
 ## Payments
-- Client: initiate (MTN/Airtel/PayPal), show status, display fee (5% min K0.50)
+- Client: initiate (MTN/Airtel/PayPal), show status, display fee (0.5% min K0.50)
 - Server: Functions callbacks finalize status and write fees to superadmin_ledger
 - Next: add webhook signature validation and idempotency guards
 

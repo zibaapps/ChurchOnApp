@@ -5,6 +5,7 @@ import '../services/tenant_settings_service.dart';
 import '../services/remote_config_service.dart';
 import 'tenant_providers.dart';
 import 'firebase_flag.dart';
+import 'accessibility_providers.dart';
 
 Color _parseHex(String? hex) {
   if (hex == null || hex.isEmpty) return const Color(0xFF5A3AFF);
@@ -34,11 +35,13 @@ final tenantSeedColorProvider = StreamProvider<Color>((ref) async* {
 final tenantThemeProvider = Provider<ThemeData>((ref) {
   final seed = ref.watch(tenantSeedColorProvider).value ?? const Color(0xFF5A3AFF);
   final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light);
-  return ThemeData(useMaterial3: true, colorScheme: scheme);
+  final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+  return applyAccessibility(base, ref);
 });
 
 final tenantDarkThemeProvider = Provider<ThemeData>((ref) {
   final seed = ref.watch(tenantSeedColorProvider).value ?? const Color(0xFF5A3AFF);
   final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
-  return ThemeData(useMaterial3: true, colorScheme: scheme);
+  final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+  return applyAccessibility(base, ref);
 });

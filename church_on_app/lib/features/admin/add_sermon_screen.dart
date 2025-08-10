@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../common/models/sermon.dart';
 import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/sermons_providers.dart';
+import '../../common/services/thumbnail_service.dart';
 
 class AddSermonScreen extends ConsumerStatefulWidget {
   const AddSermonScreen({super.key});
@@ -94,7 +95,14 @@ class _AddSermonScreenState extends ConsumerState<AddSermonScreen> {
                         livePlatform: _isLive ? _platform : null,
                         liveUrl: _isLive ? _liveUrl.text.trim() : null,
                       );
-                      await ref.read(sermonsServiceProvider).addSermon(churchId, sermon);
+                      final newId = await ref.read(sermonsServiceProvider).addSermon(churchId, sermon);
+                      // Auto-generate thumbnail if missing
+                      await ThumbnailService().generateForDoc(
+                        churchId: churchId,
+                        collection: 'sermons',
+                        docId: newId,
+                        title: sermon.title,
+                      );
                       if (mounted) Navigator.of(context).pop();
                     },
               child: const Text('Save'),

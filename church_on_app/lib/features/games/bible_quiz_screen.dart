@@ -17,21 +17,16 @@ class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
   bool _done = false;
 
   final List<_Question> _questions = const [
-    _Question(
-      prompt: 'Who led the Israelites out of Egypt?',
-      choices: ['Moses', 'David', 'Paul', 'Elijah'],
-      answerIndex: 0,
-    ),
-    _Question(
-      prompt: 'Where was Jesus born?',
-      choices: ['Nazareth', 'Jerusalem', 'Bethlehem', 'Capernaum'],
-      answerIndex: 2,
-    ),
-    _Question(
-      prompt: 'How many books are in the Bible?',
-      choices: ['39', '27', '66', '73'],
-      answerIndex: 2,
-    ),
+    _Question(prompt: 'Who led the Israelites out of Egypt?', choices: ['Moses', 'David', 'Paul', 'Elijah'], answerIndex: 0),
+    _Question(prompt: 'Where was Jesus born?', choices: ['Nazareth', 'Jerusalem', 'Bethlehem', 'Capernaum'], answerIndex: 2),
+    _Question(prompt: 'How many books are in the Bible?', choices: ['39', '27', '66', '73'], answerIndex: 2),
+    _Question(prompt: 'Who built the ark?', choices: ['Noah', 'Abraham', 'Jacob', 'Solomon'], answerIndex: 0),
+    _Question(prompt: 'First miracle of Jesus?', choices: ['Walking on water', 'Feeding 5000', 'Water to wine', 'Healing leper'], answerIndex: 2),
+    _Question(prompt: 'Who was swallowed by a great fish?', choices: ['Jonah', 'Job', 'Peter', 'John'], answerIndex: 0),
+    _Question(prompt: 'Paul’s original name?', choices: ['Peter', 'Saul', 'John', 'Barnabas'], answerIndex: 1),
+    _Question(prompt: 'Where is the Sermon on the Mount?', choices: ['Matthew', 'Mark', 'Luke', 'John'], answerIndex: 0),
+    _Question(prompt: 'Who killed Goliath?', choices: ['Saul', 'Samuel', 'David', 'Jonathan'], answerIndex: 2),
+    _Question(prompt: 'Fruit of the Spirit count?', choices: ['5', '7', '9', '12'], answerIndex: 2),
   ];
 
   void _pick(int idx) {
@@ -44,6 +39,10 @@ class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
     } else {
       setState(() => _q++);
     }
+  }
+
+  void _prev() {
+    if (_q > 0) setState(() => _q--);
   }
 
   Future<void> _submitScore() async {
@@ -104,6 +103,7 @@ class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final q = _questions[_q];
     return Scaffold(
       appBar: AppBar(title: const Text('Bible Quiz')),
       body: Center(
@@ -123,18 +123,32 @@ class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_questions[_q].prompt, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+                    Text(q.prompt, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
-                    for (int i = 0; i < _questions[_q].choices.length; i++) ...[
-                      SizedBox(
-                        width: 280,
-                        child: OutlinedButton(
-                          onPressed: () => _pick(i),
-                          child: Text(_questions[_q].choices[i]),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        for (int i = 0; i < q.choices.length; i++)
+                          ChoiceChip(
+                            label: Text(q.choices[i]),
+                            selected: false,
+                            onSelected: (_) => _pick(i),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(onPressed: _prev, icon: const Icon(Icons.arrow_back)),
+                        const SizedBox(width: 12),
+                        Text('${_q + 1} / ${_questions.length}'),
+                        const SizedBox(width: 12),
+                        IconButton(onPressed: () => _pick(-1), icon: const Icon(Icons.arrow_forward)),
+                      ],
+                    ),
                   ],
                 ),
         ),

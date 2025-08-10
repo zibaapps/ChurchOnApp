@@ -19,6 +19,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
   final _types = const [null, ReportType.secretary, ReportType.usher, ReportType.treasurer, ReportType.pastor];
   final _labels = const ['All', 'Secretary', 'Usher', 'Treasurer', 'Pastor'];
 
+  ReportVisibility? _visibilityFilter; // null = any
+
   @override
   void initState() {
     super.initState();
@@ -34,10 +36,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
 
   void _exportCsv(List<ChurchReport> items) {
     final rows = <List<String>>[
-      ['Type', 'Title', 'PeriodStart', 'PeriodEnd', 'CreatedAt', 'CreatedBy'],
+      ['Type', 'Title', 'Visibility', 'AssignedLeaderChurchId', 'PeriodStart', 'PeriodEnd', 'CreatedAt', 'CreatedBy'],
       ...items.map((r) => [
             r.type.name,
             r.title,
+            r.visibility.name,
+            r.assignedLeaderChurchId ?? '',
             r.periodStart?.toIso8601String() ?? '',
             r.periodEnd?.toIso8601String() ?? '',
             r.createdAt.toIso8601String(),
@@ -56,34 +60,60 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reports'),
-        bottom: TabBar(controller: _tabController, isScrollable: true, tabs: [
-          for (final label in _labels) Tab(text: label),
-        ]),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: () {
-              final data = reports.valueOrNull ?? const <ChurchReport>[];
-              _exportCsv(data);
-            },
-          )
-        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(72),
+          child: Column(
+            children: [
+              TabBar(controller: _tabController, isScrollable: true, tabs: [for (final label in _labels) Tab(text: label)]),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    const Text('Visibility:'),
+                    const SizedBox(width: 8),
+                    DropdownButton<ReportVisibility?>(
+                      value: _visibilityFilter,
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('Any')),
+                        ...ReportVisibility.values.map((v) => DropdownMenuItem(value: v, child: Text(v.name)))
+                      ],
+                      onChanged: (v) => setState(() => _visibilityFilter = v),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.download),
+                      onPressed: () {
+                        final data = reports.valueOrNull ?? const <ChurchReport>[];
+                        final filtered = _applyVisibility(data);
+                        _exportCsv(filtered);
+                      },
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
       ),
       body: reports.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (items) {
-          if (items.isEmpty) return const Center(child: Text('No reports'));
+          final data = _applyVisibility(items);
+          if (data.isEmpty) return const Center(child: Text('No reports'));
           return ListView.separated(
             padding: const EdgeInsets.all(12),
-            itemCount: items.length,
+            itemCount: data.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
-              final r = items[i];
+              final r = data[i];
               return Card(
                 child: ListTile(
                   title: Text(r.title),
-                  subtitle: Text('${r.type.name} • ${r.createdAt.toLocal()}'),
+                  subtitle: Text('${r.type.name} • ${r.visibility.name} • ${r.createdAt.toLocal()}'),
+                  trailing: r.assignedLeaderChurchId == null
+                      ? null
+                      : Chip(avatar: const Icon(Icons.account_balance), label: Text('Leader: ${r.assignedLeaderChurchId}')),
                 ),
               );
             },
@@ -91,5 +121,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
         },
       ),
     );
+  }
+
+  List<ChurchReport> _applyVisibility(List<ChurchReport> items) {
+    if (_visibilityFilter == null) return items;
+    return items.where((r) => r.visibility == _visibilityFilter).toList();
   }
 }
