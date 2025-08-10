@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../common/providers/tenant_providers.dart';
 import '../../common/services/billing_service.dart';
@@ -33,9 +34,36 @@ class BillingPanelScreen extends ConsumerWidget {
                     if (b.graceUntil != null) _row('Grace until', b.graceUntil!.toLocal().toString()),
                     const Divider(height: 32),
                     Wrap(spacing: 12, children: [
-                      FilledButton.tonal(onPressed: () {/* TODO: upgrade */}, child: const Text('Upgrade')),
-                      OutlinedButton(onPressed: () {/* TODO: downgrade */}, child: const Text('Downgrade')),
-                      TextButton(onPressed: () {/* TODO: manage payment method */}, child: const Text('Manage Payment Method')),
+                      FilledButton.tonal(
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('churches')
+                              .doc(churchId)
+                              .collection('tenant_settings')
+                              .doc('billing')
+                              .set({'plan': TenantPlan.pro.name}, SetOptions(merge: true));
+                          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upgraded to Pro')));
+                        },
+                        child: const Text('Upgrade'),
+                      ),
+                      OutlinedButton(
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('churches')
+                              .doc(churchId)
+                              .collection('tenant_settings')
+                              .doc('billing')
+                              .set({'plan': TenantPlan.free.name}, SetOptions(merge: true));
+                          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Downgraded to Free')));
+                        },
+                        child: const Text('Downgrade'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment method management coming soon')));
+                        },
+                        child: const Text('Manage Payment Method'),
+                      ),
                     ]),
                   ],
                 );
