@@ -120,6 +120,18 @@ service cloud.firestore {
           allow write: if isSuperAdmin(); // written by server/admin SDK only
         }
       }
+
+      match /testimonies/{docId} {
+        allow read: if resource.data.status == 'approved' || hasRole(churchId, 'admin') || isSuperAdmin();
+        allow create: if isMember(churchId);
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+      }
+
+      match /prayers/{docId} {
+        allow read: if isMember(churchId);
+        allow create: if isMember(churchId);
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin() || (uid() == resource.data.userId);
+      }
     }
 
     // Global games leaderboard only stores opt-in submissions

@@ -21,6 +21,9 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
     'Trust in the Lord',
     'In the beginning God created',
     'Be strong and courageous',
+    'Seek first the kingdom of God',
+    'Jesus wept',
+    'Love your neighbor as yourself',
   ];
   late String _target;
   late String _scrambled;
@@ -94,7 +97,6 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
     if (_controller.text.trim().toLowerCase() == _target) {
       _score++;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Correct!')));
-      await _submitScore();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Try again')));
     }
@@ -104,7 +106,9 @@ class _VerseScrambleScreenState extends ConsumerState<VerseScrambleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Verse Scramble (Score: $_score)')),
+      appBar: AppBar(title: Text('Verse Scramble (Score: $_score)'), actions: [
+        IconButton(icon: const Icon(Icons.emoji_events_outlined), onPressed: _submitScore),
+      ]),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
