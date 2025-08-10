@@ -16,32 +16,43 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  Timer? _navTimer;
+  Timer? _fallbackTimer;
+  bool _navigated = false;
+
+  void _navTo(String route) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    context.go(route);
+  }
 
   void _decideNavigation() {
     final auth = ref.read(currentUserStreamProvider);
     final user = auth.valueOrNull;
     if (user == null) {
-      context.go('/onboarding');
+      _navTo('/onboarding');
       return;
     }
     if (user.churchId == null) {
-      context.go('/onboarding/church');
+      _navTo('/onboarding/church');
       return;
     }
-    context.go('/home');
+    _navTo('/home');
   }
 
   @override
   void initState() {
     super.initState();
-    // Wait briefly to show branding, then decide route
-    _navTimer = Timer(const Duration(milliseconds: 600), () => _decideNavigation());
+    // Decide as soon as first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) => _decideNavigation());
+    // Fallback after 2s in case auth stream is delayed on web
+    _fallbackTimer = Timer(const Duration(seconds: 2), () {
+      if (!_navigated) _decideNavigation();
+    });
   }
 
   @override
   void dispose() {
-    _navTimer?.cancel();
+    _fallbackTimer?.cancel();
     super.dispose();
   }
 

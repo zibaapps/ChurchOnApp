@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/providers/tenant_providers.dart';
 import '../../common/services/billing_service.dart';
 import '../../common/models/tenant_billing.dart';
+import 'reconciliation_screen.dart';
 
 class BillingPanelScreen extends ConsumerWidget {
   const BillingPanelScreen({super.key});
@@ -66,6 +67,10 @@ class BillingPanelScreen extends ConsumerWidget {
                           );
                         },
                         child: const Text('Manage Payment Method'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReconciliationScreen())),
+                        child: const Text('Reconciliation'),
                       ),
                     ]),
                   ],
