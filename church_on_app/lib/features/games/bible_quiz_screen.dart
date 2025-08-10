@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../common/providers/tenant_providers.dart';
@@ -12,11 +13,13 @@ class BibleQuizScreen extends ConsumerStatefulWidget {
 }
 
 class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
-  int _q = 0;
   int _score = 0;
-  bool _done = false;
+  int _streak = 0;
+  int _questionIndex = 0;
+  late List<_Question> _deck;
+  final Random _rng = Random();
 
-  final List<_Question> _questions = const [
+  final List<_Question> _bank = const [
     _Question(prompt: 'Who led the Israelites out of Egypt?', choices: ['Moses', 'David', 'Paul', 'Elijah'], answerIndex: 0),
     _Question(prompt: 'Where was Jesus born?', choices: ['Nazareth', 'Jerusalem', 'Bethlehem', 'Capernaum'], answerIndex: 2),
     _Question(prompt: 'How many books are in the Bible?', choices: ['39', '27', '66', '73'], answerIndex: 2),
@@ -27,22 +30,38 @@ class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
     _Question(prompt: 'Where is the Sermon on the Mount?', choices: ['Matthew', 'Mark', 'Luke', 'John'], answerIndex: 0),
     _Question(prompt: 'Who killed Goliath?', choices: ['Saul', 'Samuel', 'David', 'Jonathan'], answerIndex: 2),
     _Question(prompt: 'Fruit of the Spirit count?', choices: ['5', '7', '9', '12'], answerIndex: 2),
+    _Question(prompt: 'Who was thrown into the lions’ den?', choices: ['Daniel', 'Jeremiah', 'Nehemiah', 'Ezekiel'], answerIndex: 0),
+    _Question(prompt: 'Which apostle doubted Jesus after resurrection?', choices: ['Peter', 'John', 'Thomas', 'James'], answerIndex: 2),
+    _Question(prompt: 'What is the last book of the Bible?', choices: ['Jude', 'Revelation', 'Acts', 'Hebrews'], answerIndex: 1),
+    _Question(prompt: 'What is the first commandment?', choices: ['No idols', 'Keep Sabbath', 'Love God only', 'Do not kill'], answerIndex: 2),
   ];
 
-  void _pick(int idx) {
-    if (_done) return;
-    if (idx == _questions[_q].answerIndex) {
-      _score++;
-    }
-    if (_q + 1 >= _questions.length) {
-      setState(() => _done = true);
-    } else {
-      setState(() => _q++);
-    }
+  @override
+  void initState() {
+    super.initState();
+    _reshuffleDeck();
   }
 
-  void _prev() {
-    if (_q > 0) setState(() => _q--);
+  void _reshuffleDeck() {
+    _deck = List<_Question>.from(_bank)..shuffle(_rng);
+    _questionIndex = 0;
+  }
+
+  void _pick(int idx) {
+    final q = _deck[_questionIndex];
+    final correct = idx == q.answerIndex;
+    setState(() {
+      if (correct) {
+        _score += 10;
+        _streak += 1;
+      } else {
+        _streak = 0;
+      }
+      _questionIndex += 1;
+      if (_questionIndex >= _deck.length) {
+        _reshuffleDeck();
+      }
+    });
   }
 
   Future<void> _submitScore() async {
@@ -93,64 +112,42 @@ class _BibleQuizScreenState extends ConsumerState<BibleQuizScreen> {
     }
   }
 
-  void _reset() {
-    setState(() {
-      _q = 0;
-      _score = 0;
-      _done = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final q = _questions[_q];
+    final q = _deck[_questionIndex];
     return Scaffold(
       appBar: AppBar(title: const Text('Bible Quiz')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: _done
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Score: $_score / ${_questions.length}', style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 16),
-                    FilledButton(onPressed: _submitScore, child: const Text('Submit Score')),
-                    const SizedBox(height: 12),
-                    OutlinedButton(onPressed: _reset, child: const Text('Play Again')),
-                  ],
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(q.prompt, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        for (int i = 0; i < q.choices.length; i++)
-                          ChoiceChip(
-                            label: Text(q.choices[i]),
-                            selected: false,
-                            onSelected: (_) => _pick(i),
-                          ),
-                      ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(q.prompt, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (int i = 0; i < q.choices.length; i++)
+                    ChoiceChip(
+                      label: Text(q.choices[i]),
+                      selected: false,
+                      onSelected: (_) => _pick(i),
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(onPressed: _prev, icon: const Icon(Icons.arrow_back)),
-                        const SizedBox(width: 12),
-                        Text('${_q + 1} / ${_questions.length}'),
-                        const SizedBox(width: 12),
-                        IconButton(onPressed: () => _pick(-1), icon: const Icon(Icons.arrow_forward)),
-                      ],
-                    ),
-                  ],
-                ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text('Score: $_score'),
+                const SizedBox(width: 16),
+                Text('Streak: $_streak')
+              ]),
+              const SizedBox(height: 12),
+              OutlinedButton(onPressed: _submitScore, child: const Text('Submit Score')),
+            ],
+          ),
         ),
       ),
     );
