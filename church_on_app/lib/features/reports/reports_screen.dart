@@ -6,6 +6,8 @@ import 'package:csv/csv.dart';
 import '../../common/models/report.dart';
 import '../../common/providers/reports_providers.dart';
 import '../../common/web/export_csv.dart' if (dart.library.html) '../../common/web/export_csv_web.dart';
+import '../../common/providers/auth_providers.dart';
+import '../../common/providers/tenant_providers.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -57,6 +59,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
   Widget build(BuildContext context) {
     final type = _types[_tabController.index];
     final reports = ref.watch(reportsStreamProvider(type));
+    final isAdmin = ref.watch(isAdminProvider);
+    final activeChurchId = ref.watch(activeChurchIdProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reports'),
@@ -111,9 +115,40 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                 child: ListTile(
                   title: Text(r.title),
                   subtitle: Text('${r.type.name} • ${r.visibility.name} • ${r.createdAt.toLocal()}'),
-                  trailing: r.assignedLeaderChurchId == null
-                      ? null
-                      : Chip(avatar: const Icon(Icons.account_balance), label: Text('Leader: ${r.assignedLeaderChurchId}')),
+                  trailing: Wrap(spacing: 8, children: [
+                    if (r.assignedLeaderChurchId != null) Chip(avatar: const Icon(Icons.account_balance), label: Text('Leader: ${r.assignedLeaderChurchId}')),
+                    if (isAdmin && activeChurchId != null)
+                      PopupMenuButton<String>(
+                        onSelected: (val) async {
+                          if (val.startsWith('vis:')) {
+                            final v = ReportVisibility.values.firstWhere((e) => e.name == val.substring(4));
+                            await ref.read(reportsServiceProvider).updateVisibility(activeChurchId, r.id, v);
+                          } else if (val == 'assign') {
+                            final controller = TextEditingController(text: r.assignedLeaderChurchId ?? '');
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Assign Leader Church ID'),
+                                content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Leader Church ID')), 
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                  FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save')),
+                                ],
+                              ),
+                            );
+                            if (ok == true) {
+                              await ref.read(reportsServiceProvider).assignLeader(activeChurchId, r.id, controller.text.trim().isEmpty ? null : controller.text.trim());
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'assign', child: Text('Assign Leader Church ID')),
+                          const PopupMenuDivider(),
+                          for (final v in ReportVisibility.values)
+                            PopupMenuItem(value: 'vis:${v.name}', child: Text('Set ${v.name}')),
+                        ],
+                      ),
+                  ]),
                 ),
               );
             },

@@ -54,6 +54,7 @@ import '../features/search/search_screen.dart';
 import '../features/settings/accessibility_settings_screen.dart';
 import '../features/settings/two_factor_screen.dart';
 import '../features/settings/privacy_settings_screen.dart';
+import '../features/coming/features_screen.dart';
 import '../features/bible/annotations_screen.dart';
 
 final router = GoRouter(
@@ -132,6 +133,7 @@ final router = GoRouter(
     GoRoute(path: '/settings/accessibility', builder: (c, s) => const AccessibilitySettingsScreen()),
     GoRoute(path: '/settings/2fa', builder: (c, s) => const TwoFactorScreen()),
     GoRoute(path: '/settings/privacy', builder: (c, s) => const PrivacySettingsScreen()),
+    GoRoute(path: '/features', builder: (c, s) => const FeaturesScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),
