@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../common/models/sermon.dart';
 import '../../common/services/sermons_service.dart';
 import '../../common/widgets/web_iframe.dart';
+import '../../common/services/media_download_service.dart';
 
 class SermonDetailScreen extends StatefulWidget {
   const SermonDetailScreen({super.key, required this.churchId, required this.sermonId});
@@ -20,6 +21,8 @@ class SermonDetailScreen extends StatefulWidget {
 
 class _SermonDetailScreenState extends State<SermonDetailScreen> {
   VideoPlayerController? _videoController;
+  bool _downloading = false;
+  double _progress = 0;
 
   @override
   void dispose() {
@@ -58,10 +61,16 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Live Stream'),
+                  const Text('Live Stream', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   WebIFrame(url: sermon.liveUrl!, height: 360),
+                  if ((sermon.rtmpUrl ?? '').isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text('RTMP: ${sermon.rtmpUrl}  Key: ${sermon.streamKey ?? ''}', style: Theme.of(context).textTheme.bodySmall),
+                    ),
                 ],
               ),
             );
@@ -89,6 +98,45 @@ class _SermonDetailScreenState extends State<SermonDetailScreen> {
                   FilledButton(
                     onPressed: () => launchUrl(Uri.parse(sermon.mediaUrl), mode: LaunchMode.externalApplication),
                     child: const Text('Open Audio'),
+                  ),
+                  const SizedBox(height: 8),
+                  FutureBuilder<bool>(
+                    future: MediaDownloadService().isDownloaded(sermon.mediaUrl),
+                    builder: (context, snap) {
+                      final ready = snap.data == true;
+                      return Column(
+                        children: [
+                          if (!ready)
+                            FilledButton.tonal(
+                              onPressed: _downloading
+                                  ? null
+                                  : () async {
+                                      setState(() {
+                                        _downloading = true;
+                                        _progress = 0;
+                                      });
+                                      await MediaDownloadService().downloadAudio(
+                                        sermon.mediaUrl,
+                                        onProgress: (r, t) => setState(() => _progress = t == 0 ? 0 : r / t),
+                                      );
+                                      if (mounted) setState(() => _downloading = false);
+                                    },
+                              child: _downloading
+                                  ? SizedBox(
+                                      height: 20,
+                                      width: 200,
+                                      child: LinearProgressIndicator(value: _progress > 0 ? _progress : null),
+                                    )
+                                  : const Text('Download for offline'),
+                            ),
+                          if (ready)
+                            OutlinedButton(
+                              onPressed: () => MediaDownloadService().deleteDownloaded(sermon.mediaUrl).then((_) => setState(() {})),
+                              child: const Text('Remove download'),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

@@ -1,10 +1,9 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, Church-On-App-with-Cursor ]
-  pull_request:
-    branches: [ main, Church-On-App-with-Cursor ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -13,17 +12,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
-      - name: Install dependencies
-        working-directory: church_on_app
-        run: |
-          flutter pub get
-      - name: Analyze
-        working-directory: church_on_app
-        run: flutter analyze
-      - name: Test
-        working-directory: church_on_app
-        run: flutter test -r expanded
-      - name: Build web
-        working-directory: church_on_app
-        run: flutter build web --release
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test -r expanded
+      - run: flutter build web --release

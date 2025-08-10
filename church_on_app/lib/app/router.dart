@@ -36,6 +36,8 @@ import '../features/chat/chat_room_screen.dart';
 import '../features/news/news_screen.dart';
 import '../features/reports/reports_screen.dart';
 import '../features/reports/service_issues_screen.dart';
+import '../features/connect/testimonies_screen.dart';
+import '../features/connect/prayer_requests_screen.dart';
 import '../features/churches/nearby_churches_screen.dart';
 import '../features/games/bible_quiz_screen.dart';
 import '../features/games/memory_match_screen.dart';
@@ -48,6 +50,9 @@ import '../features/bible/reading_plans_screen.dart';
 import '../features/support/support_screen.dart';
 import '../features/support/report_problem_screen.dart';
 import '../features/search/search_screen.dart';
+import '../features/settings/accessibility_settings_screen.dart';
+import '../features/settings/two_factor_screen.dart';
+import '../features/settings/privacy_settings_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -108,8 +113,8 @@ final router = GoRouter(
     GoRoute(path: '/connect/games/scramble', builder: (c, s) => const VerseScrambleScreen()),
     GoRoute(path: '/connect/games/leaderboard', builder: (c, s) => const LeaderboardScreen()),
     GoRoute(path: '/chat/:id', builder: (c, s) => ChatRoomScreen(threadId: s.pathParameters['id']!)),
-    GoRoute(path: '/connect/testimonies', builder: (c, s) => const _PlaceholderPage(title: 'Testimonies')),
-    GoRoute(path: '/connect/prayers', builder: (c, s) => const _PlaceholderPage(title: 'Prayer Requests')),
+    GoRoute(path: '/connect/testimonies', builder: (c, s) => const TestimoniesScreen()),
+    GoRoute(path: '/connect/prayers', builder: (c, s) => const PrayerRequestsScreen()),
     GoRoute(path: '/announcements', builder: (c, s) => const AnnouncementsScreen()),
     GoRoute(path: '/news', builder: (c, s) => const NewsScreen()),
     GoRoute(path: '/reports', builder: (c, s) => const ReportsScreen()),
@@ -120,6 +125,9 @@ final router = GoRouter(
     GoRoute(path: '/support', builder: (c, s) => const SupportScreen()),
     GoRoute(path: '/support/report', builder: (c, s) => const ReportProblemScreen()),
     GoRoute(path: '/search', builder: (c, s) => const SearchScreen()),
+    GoRoute(path: '/settings/accessibility', builder: (c, s) => const AccessibilitySettingsScreen()),
+    GoRoute(path: '/settings/2fa', builder: (c, s) => const TwoFactorScreen()),
+    GoRoute(path: '/settings/privacy', builder: (c, s) => const PrivacySettingsScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),

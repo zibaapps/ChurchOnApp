@@ -5,13 +5,33 @@ import '../providers/tenant_providers.dart';
 import '../providers/auth_providers.dart';
 
 class NotificationPrefs {
-  const NotificationPrefs({this.news = true, this.events = true, this.announcements = true});
+  const NotificationPrefs({
+    this.news = true,
+    this.events = true,
+    this.announcements = true,
+    this.sermons = true,
+    this.prayers = true,
+    this.testimonies = true,
+    this.giving = false,
+  });
   final bool news;
   final bool events;
   final bool announcements;
+  final bool sermons;
+  final bool prayers;
+  final bool testimonies;
+  final bool giving;
 
-  NotificationPrefs copyWith({bool? news, bool? events, bool? announcements}) =>
-      NotificationPrefs(news: news ?? this.news, events: events ?? this.events, announcements: announcements ?? this.announcements);
+  NotificationPrefs copyWith({bool? news, bool? events, bool? announcements, bool? sermons, bool? prayers, bool? testimonies, bool? giving}) =>
+      NotificationPrefs(
+        news: news ?? this.news,
+        events: events ?? this.events,
+        announcements: announcements ?? this.announcements,
+        sermons: sermons ?? this.sermons,
+        prayers: prayers ?? this.prayers,
+        testimonies: testimonies ?? this.testimonies,
+        giving: giving ?? this.giving,
+      );
 }
 
 final notificationPrefsProvider = StateProvider<NotificationPrefs>((ref) => const NotificationPrefs());
@@ -33,6 +53,10 @@ class NotificationManager {
       'news_$churchId': prefs.news,
       'events_$churchId': prefs.events,
       'announcements_$churchId': prefs.announcements,
+      'sermons_$churchId': prefs.sermons,
+      'prayers_$churchId': prefs.prayers,
+      'testimonies_$churchId': prefs.testimonies,
+      'giving_$churchId': prefs.giving,
     };
     for (final entry in topics.entries) {
       if (entry.value) {

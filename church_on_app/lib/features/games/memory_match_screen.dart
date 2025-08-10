@@ -25,7 +25,7 @@ class _MemoryMatchScreenState extends ConsumerState<MemoryMatchScreen> {
   }
 
   void _reset() {
-    final verses = [
+    final pool = [
       'John 3:16',
       'Psalm 23:1',
       'Philippians 4:13',
@@ -34,7 +34,11 @@ class _MemoryMatchScreenState extends ConsumerState<MemoryMatchScreen> {
       'Isaiah 40:31',
       'Jeremiah 29:11',
       'Matthew 6:33',
+      'John 14:6',
+      'Psalm 121:1-2',
     ];
+    pool.shuffle(Random());
+    final verses = pool.take(8).toList();
     _cards = [
       for (final v in verses) _CardItem(v, false),
       for (final v in verses) _CardItem(v, false),
@@ -103,8 +107,9 @@ class _MemoryMatchScreenState extends ConsumerState<MemoryMatchScreen> {
         _matches++;
         _first = null;
         if (_matches == _cards.length ~/ 2) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All matched!')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All matched! New round starting...')));
           await _submitScore();
+          _reset();
         }
       } else {
         _busy = true;

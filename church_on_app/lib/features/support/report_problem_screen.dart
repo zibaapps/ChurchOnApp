@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReportProblemScreen extends StatefulWidget {
   const ReportProblemScreen({super.key});
@@ -25,7 +26,18 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             const SizedBox(height: 12),
             FilledButton(
               onPressed: () async {
-                // TODO: Send to Firestore or support email/Cloud Function
+                final subj = _subject.text.trim();
+                final body = _details.text.trim();
+                if (subj.isEmpty || body.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill subject and details')));
+                  return;
+                }
+                await FirebaseFirestore.instance.collection('support_reports').add({
+                  'subject': subj,
+                  'details': body,
+                  'createdAt': DateTime.now().toUtc().toIso8601String(),
+                });
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks! We will look into it.')));
                 Navigator.of(context).pop();
               },

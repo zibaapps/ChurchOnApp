@@ -95,6 +95,38 @@ class ProfileTab extends ConsumerWidget {
                           await ref.read(notificationManagerProvider).apply();
                         },
                       ),
+                      SwitchListTile(
+                        title: const Text('Sermons'),
+                        value: prefs.sermons,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(sermons: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Prayer Requests'),
+                        value: prefs.prayers,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(prayers: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Testimonies'),
+                        value: prefs.testimonies,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(testimonies: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Giving'),
+                        value: prefs.giving,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(giving: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
                     ],
                   );
                 }),
