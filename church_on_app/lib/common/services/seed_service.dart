@@ -13,6 +13,7 @@ class SeedService {
       {'uid': 'user1', 'email': 'alice@example.com', 'displayName': 'Alice', 'role': 'user', 'password': 'password123'},
       {'uid': 'user2', 'email': 'bob@example.com', 'displayName': 'Bob', 'role': 'user', 'password': 'password123'},
       {'uid': 'admin1', 'email': 'admin@example.com', 'displayName': 'Admin', 'role': 'admin', 'password': 'password123'},
+      {'uid': 'super1', 'email': 'superadmin@example.com', 'displayName': 'Super Admin', 'role': 'superAdmin', 'password': 'superpass123'},
     ];
     for (final u in users) {
       final userRef = _firestore.collection('users').doc(u['uid']!);
