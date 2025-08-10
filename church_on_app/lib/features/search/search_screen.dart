@@ -17,6 +17,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _q = TextEditingController();
   List<_Result> _results = const [];
   bool _loading = false;
+  List<String> _recent = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecent();
+  }
+
+  Future<void> _loadRecent() async {
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (user == null) return;
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('searches')
+        .orderBy('createdAt', descending: true)
+        .limit(10)
+        .get();
+    setState(() => _recent = snap.docs.map((d) => (d.data()['query'] as String?) ?? '').where((q) => q.isNotEmpty).toList());
+  }
 
   Future<void> _saveQuery() async {
     final user = ref.read(currentUserStreamProvider).valueOrNull;
@@ -26,8 +46,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       'query': q,
       'createdAt': DateTime.now().toUtc().toIso8601String(),
     });
+    await _loadRecent();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved search')));
+  }
+
+  Future<void> _clearRecent() async {
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    if (user == null) return;
+    final col = FirebaseFirestore.instance.collection('users').doc(user.uid).collection('searches');
+    final snap = await col.get();
+    for (final d in snap.docs) {
+      await d.reference.delete();
+    }
+    await _loadRecent();
   }
 
   Future<void> _run() async {
@@ -115,6 +147,35 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ],
             ),
           ),
+          if (_recent.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final s in _recent)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ActionChip(
+                                label: Text(s),
+                                onPressed: () {
+                                  _q.text = s;
+                                  _run();
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  TextButton(onPressed: _clearRecent, child: const Text('Clear')),
+                ],
+              ),
+            ),
           if (_loading) const LinearProgressIndicator(minHeight: 2),
           Expanded(
             child: ListView.separated(
