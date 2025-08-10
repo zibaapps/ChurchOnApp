@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/tenant_settings_service.dart';
+import '../services/remote_config_service.dart';
 import 'tenant_providers.dart';
+import 'firebase_flag.dart';
 
 Color _parseHex(String? hex) {
   if (hex == null || hex.isEmpty) return const Color(0xFF5A3AFF);
@@ -17,13 +19,15 @@ Color _parseHex(String? hex) {
 
 final tenantSeedColorProvider = StreamProvider<Color>((ref) async* {
   final churchId = ref.watch(activeChurchIdProvider);
+  final firebaseReady = ref.watch(firebaseInitializedProvider);
+  final rcSeed = firebaseReady ? _parseHex(RemoteConfigService().themeSeed) : const Color(0xFF5A3AFF);
   if (churchId == null) {
-    yield const Color(0xFF5A3AFF);
+    yield rcSeed;
     return;
   }
   await for (final data in TenantSettingsService().streamChurch(churchId)) {
     final color = _parseHex(data?['themeColor'] as String?);
-    yield color;
+    yield color == const Color(0xFF5A3AFF) ? rcSeed : color;
   }
 });
 

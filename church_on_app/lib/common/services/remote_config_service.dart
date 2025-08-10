@@ -8,7 +8,8 @@ class RemoteConfigService {
     await _rc.setDefaults(const {
       'domain': 'churchapp.cloud',
       'supportEmail': 'support@churchapp.cloud',
-      'supportPhone': '+260968551110',
+      'supportPhone': '+260955202036',
+      'themeSeed': '#5A3AFF',
     });
     await _rc.fetchAndActivate();
   }
@@ -16,4 +17,5 @@ class RemoteConfigService {
   String get domain => _rc.getString('domain');
   String get supportEmail => _rc.getString('supportEmail');
   String get supportPhone => _rc.getString('supportPhone');
+  String get themeSeed => _rc.getString('themeSeed');
 }

@@ -7,6 +7,8 @@ import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/config_providers.dart';
 import '../../common/services/security_service.dart';
 import 'emergency_contacts_screen.dart';
+import '../../common/providers/notifications_providers.dart';
+import '../../common/services/privacy_service.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -63,6 +65,40 @@ class ProfileTab extends ConsumerWidget {
                   decoration: const InputDecoration(labelText: 'Active Church'),
                 ),
                 const Divider(),
+                Text('Notifications', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Consumer(builder: (context, ref, _) {
+                  final prefs = ref.watch(notificationPrefsProvider);
+                  return Column(
+                    children: [
+                      SwitchListTile(
+                        title: const Text('News'),
+                        value: prefs.news,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(news: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Events'),
+                        value: prefs.events,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(events: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                      SwitchListTile(
+                        title: const Text('Announcements'),
+                        value: prefs.announcements,
+                        onChanged: (v) async {
+                          ref.read(notificationPrefsProvider.notifier).state = prefs.copyWith(announcements: v);
+                          await ref.read(notificationManagerProvider).apply();
+                        },
+                      ),
+                    ],
+                  );
+                }),
+                const Divider(),
                 if (isAdmin) ...[
                   ListTile(
                     leading: const Icon(Icons.admin_panel_settings),
@@ -110,6 +146,26 @@ class ProfileTab extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/support'),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.download),
+                  title: const Text('Request Data Export'),
+                  onTap: () async {
+                    await PrivacyService().requestExport();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export request submitted')));
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever),
+                  title: const Text('Request Account Deletion'),
+                  onTap: () async {
+                    await PrivacyService().requestDeletion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deletion request submitted')));
+                    }
+                  },
+                ),
                 FilledButton.tonal(
                   onPressed: () => auth.signOut(),
                   child: const Text('Sign out'),
@@ -153,7 +209,7 @@ class _ShakeSosTileState extends State<_ShakeSosTile> {
               // Load latest from Firestore via service screen if needed; for now the SOS will fall back automatically
               return const <String>[];
             },
-            defaultNumber: '+260968551110',
+            defaultNumber: '+260955202036',
           );
         } else {
           _svc.stopListening();

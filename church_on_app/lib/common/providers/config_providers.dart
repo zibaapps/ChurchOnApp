@@ -16,7 +16,7 @@ final supportEmailProvider = Provider<String>((ref) {
 final supportPhoneProvider = Provider<String>((ref) {
   final rc = ref.watch(remoteConfigServiceProvider);
   final data = ref.watch(appConfigStreamProvider).valueOrNull;
-  return rc.supportPhone.isNotEmpty ? rc.supportPhone : ((data?['supportPhone'] as String?) ?? '+260968551110');
+  return rc.supportPhone.isNotEmpty ? rc.supportPhone : ((data?['supportPhone'] as String?) ?? '+260955202036');
 });
 
 final domainProvider = Provider<String>((ref) {

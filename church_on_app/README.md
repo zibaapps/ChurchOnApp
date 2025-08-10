@@ -4,7 +4,7 @@ A multi-tenant church platform built with Flutter + Firebase featuring sermons, 
 
 - Domain (current): churchapp.cloud
 - Support: support@churchapp.cloud
-- Phone: +260968551110
+- Phone: +260955202036
 
 ## Features
 - Multi-tenancy: memberships, active church selection, tenant theming (name/icon/color)
@@ -43,7 +43,7 @@ We store essential profile and church membership data, content, payments metadat
 
 ## Support
 - Email: support@churchapp.cloud
-- Phone: +260968551110
+- Phone: +260955202036
 
 ## License
 Proprietary. All rights reserved.

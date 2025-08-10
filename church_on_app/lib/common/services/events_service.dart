@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/event.dart';
 import 'security_service.dart';
+import '../models/page_result.dart';
 
 class EventsService {
   EventsService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -19,6 +20,25 @@ class EventsService {
         .limit(limit)
         .snapshots()
         .map((s) => s.docs.map((d) => EventItem.fromDoc(d.id, d.data())).toList());
+  }
+
+  Future<PageResult<EventItem>> fetchUpcomingEventsPage(String churchId, {int limit = 20, DocumentSnapshot? startAfter}) async {
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+    Query<Map<String, dynamic>> q = _firestore
+        .collection('churches')
+        .doc(churchId)
+        .collection('events')
+        .where('endAt', isGreaterThanOrEqualTo: nowIso)
+        .orderBy('endAt')
+        .limit(limit);
+    if (startAfter != null) {
+      q = (q as Query<Map<String, dynamic>>).startAfterDocument(startAfter);
+    }
+    final snap = await q.get();
+    final items = snap.docs.map((d) => EventItem.fromDoc(d.id, d.data())).toList();
+    final last = snap.docs.isEmpty ? null : snap.docs.last;
+    final hasMore = snap.docs.length == limit;
+    return PageResult<EventItem>(items: items, lastDoc: last, hasMore: hasMore);
   }
 
   Future<void> addEvent(String churchId, EventItem event) async {

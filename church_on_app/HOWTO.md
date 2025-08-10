@@ -46,4 +46,4 @@
 ## Support
 - Domain: churchapp.cloud
 - Email: support@churchapp.cloud
-- Phone: +260968551110
+- Phone: +260955202036
