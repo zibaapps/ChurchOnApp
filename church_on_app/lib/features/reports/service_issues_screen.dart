@@ -109,7 +109,7 @@ class _ServiceIssuesScreenState extends ConsumerState<ServiceIssuesScreen> {
                                   subtitle: Text('${x.type.name} • ${x.severity.name} • ${x.status.name}\n${x.description}'),
                                   isThreeLine: true,
                                   trailing: PopupMenuButton<IssueStatus>(
-                                    onSelected: (s) => ServiceIssueService().updateStatus(churchId, x.id, s),
+                                    onSelected: (s) => ServiceIssueService().updateStatus(churchId, x.id, s, updatedBy: user?.uid ?? 'unknown'),
                                     itemBuilder: (context) => IssueStatus.values
                                         .map((s) => PopupMenuItem(value: s, child: Text('Mark ${s.name}')))
                                         .toList(),

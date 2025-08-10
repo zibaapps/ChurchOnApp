@@ -57,6 +57,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       }
     }
 
+    // My notes (bible_annotations type note)
+    final uid = FirebaseFirestore.instance.app.options.projectId; // placeholder, not ideal in this context
+    try {
+      final notes = await FirebaseFirestore.instance.collection('users').doc(uid).collection('bible_annotations').where('type', isEqualTo: 'note').limit(100).get();
+      for (final d in notes.docs) {
+        final text = (d.data()['text'] as String?) ?? '';
+        if (text.toLowerCase().contains(query.toLowerCase())) {
+          out.add(_Result('My Note', text));
+        }
+      }
+    } catch (_) {}
+
     setState(() {
       _results = out.take(100).toList();
       _loading = false;

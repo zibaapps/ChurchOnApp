@@ -20,8 +20,19 @@ class ServiceIssueService {
     await _col(churchId).add(issue.toMap());
   }
 
-  Future<void> updateStatus(String churchId, String issueId, IssueStatus status) async {
+  Future<void> updateStatus(String churchId, String issueId, IssueStatus status, {required String updatedBy}) async {
     await ZipModeService().guardWrite(churchId);
-    await _col(churchId).doc(issueId).update({'status': status.name});
+    final ref = _col(churchId).doc(issueId);
+    await _firestore.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      final prev = (snap.data() as Map<String, dynamic>?)?['status'] as String? ?? 'open';
+      txn.update(ref, {'status': status.name});
+      txn.set(ref.collection('audit').doc(), {
+        'ts': DateTime.now().toUtc().toIso8601String(),
+        'updatedBy': updatedBy,
+        'from': prev,
+        'to': status.name,
+      });
+    });
   }
 }

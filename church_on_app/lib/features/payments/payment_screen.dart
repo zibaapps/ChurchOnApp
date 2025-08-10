@@ -8,6 +8,8 @@ import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/auth_providers.dart';
 import '../../common/widgets/animations.dart';
 import '../../common/services/fx_service.dart';
+import '../../common/services/receipt_service.dart';
+import '../../common/providers/tenant_info_providers.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   const PaymentScreen({super.key});
@@ -111,6 +113,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                     if (res.success) {
                       await ref.read(analyticsServiceProvider).logGiveSuccess(churchId: churchId!, userId: user.uid, amount: amt, method: 'mtn', reference: res.reference);
+                      final churchName = ref.read(tenantDisplayNameProvider);
+                      final bytes = await ReceiptService().buildPaymentReceipt(
+                        churchName: churchName,
+                        userName: user.displayName ?? user.email ?? user.uid,
+                        amountZmw: amt,
+                        method: 'MTN',
+                        reference: res.reference ?? '-',
+                        createdAt: DateTime.now(),
+                      );
+                      await ReceiptService().sharePdf(bytes, filename: 'receipt_mtn.pdf');
                     }
                     if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
                   },
@@ -140,6 +152,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                     if (res.success) {
                       await ref.read(analyticsServiceProvider).logGiveSuccess(churchId: churchId!, userId: user.uid, amount: amt, method: 'airtel', reference: res.reference);
+                      final churchName = ref.read(tenantDisplayNameProvider);
+                      final bytes = await ReceiptService().buildPaymentReceipt(
+                        churchName: churchName,
+                        userName: user.displayName ?? user.email ?? user.uid,
+                        amountZmw: amt,
+                        method: 'Airtel',
+                        reference: res.reference ?? '-',
+                        createdAt: DateTime.now(),
+                      );
+                      await ReceiptService().sharePdf(bytes, filename: 'receipt_airtel.pdf');
                     }
                     if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
                   },

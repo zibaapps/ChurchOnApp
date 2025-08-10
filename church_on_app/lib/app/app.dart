@@ -7,6 +7,7 @@ import 'router.dart';
 import '../common/providers/theme_providers.dart';
 import '../common/providers/tenant_providers.dart';
 import '../common/services/domain_service.dart';
+import '../common/providers/accessibility_providers.dart';
 
 class ChurchOnApp extends ConsumerWidget {
   const ChurchOnApp({super.key});
@@ -26,6 +27,7 @@ class ChurchOnApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     _bootstrapDomain(ref);
+    final scale = ref.watch(textScaleProvider);
     return MaterialApp.router(
       title: 'Church On App',
       debugShowCheckedModeBanner: false,
@@ -33,6 +35,13 @@ class ChurchOnApp extends ConsumerWidget {
       theme: ref.watch(tenantThemeProvider),
       darkTheme: ref.watch(tenantDarkThemeProvider),
       routerConfig: router,
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: scale),
+          child: child,
+        );
+      },
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

@@ -115,6 +115,10 @@ service cloud.firestore {
         allow read: if isMember(churchId) || isSuperAdmin();
         allow create: if isMember(churchId);
         allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+        match /audit/{auditId} {
+          allow read: if hasRole(churchId, 'admin') || isSuperAdmin();
+          allow write: if isSuperAdmin(); // written by server/admin SDK only
+        }
       }
     }
 
