@@ -63,6 +63,7 @@ dependencies:
   connectivity_plus: ^6.0.5
   http: ^1.5.0
   xml: ^6.5.0
+  path_provider: ^2.1.4
 
   # Media
   just_audio: ^0.9.42
