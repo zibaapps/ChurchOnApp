@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/providers/analytics_providers.dart';
 
 import '../../common/services/fees_service.dart';
@@ -25,6 +26,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   bool _loading = false;
   String? _fxUsd; // USD equivalent text
   bool _fxLoading = false;
+  bool _loadedPrefs = false;
 
   Future<void> _refreshFx() async {
     final amt = double.tryParse(_amount.text) ?? 0;
@@ -52,6 +54,22 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     final churchId = ref.watch(activeChurchIdProvider);
     final user = ref.watch(currentUserStreamProvider).valueOrNull;
+
+    // Prefetch default method once
+    if (!_loadedPrefs && churchId != null) {
+      FirebaseFirestore.instance
+          .collection('churches')
+          .doc(churchId)
+          .collection('tenant_settings')
+          .doc('payment_prefs')
+          .get()
+          .then((d) {
+        if (!mounted) return;
+        final m = d.data()?['defaultMethod']?.toString();
+        if (m != null && m != _method) setState(() => _method = m);
+        _loadedPrefs = true;
+      }).ignore();
+    }
 
     return Scaffold(
       appBar: AppBar(

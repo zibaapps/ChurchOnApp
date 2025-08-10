@@ -15,7 +15,7 @@ class _ArScanScreenState extends State<ArScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan QR for AR Altar')),
+      appBar: AppBar(title: const Text('Scan QR')),
       body: Stack(
         children: [
           MobileScanner(
@@ -26,7 +26,11 @@ class _ArScanScreenState extends State<ArScanScreen> {
               final raw = barcodes.first.rawValue ?? '';
               if (raw.isEmpty) return;
               _handled = true;
-              context.go('/ar/view', extra: raw);
+              if (raw.contains('invite=')) {
+                context.go('/onboarding?${Uri.parse(raw).query}');
+              } else {
+                context.go('/ar/view', extra: raw);
+              }
             },
           ),
           Positioned(

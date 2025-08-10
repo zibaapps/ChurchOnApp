@@ -26,6 +26,7 @@ import '../features/interchurch/interchurch_invite_screen.dart';
 import '../features/programs/year_program_screen.dart';
 import '../features/moderation/moderation_screen.dart';
 import '../features/payments/payment_screen.dart';
+import '../features/admin/reconciliation_screen.dart';
 import '../features/memberships/membership_admin_screen.dart';
 import '../features/tour/app_tour_screen.dart';
 import '../common/providers/auth_providers.dart';
@@ -53,6 +54,11 @@ import '../features/search/search_screen.dart';
 import '../features/settings/accessibility_settings_screen.dart';
 import '../features/settings/two_factor_screen.dart';
 import '../features/settings/privacy_settings_screen.dart';
+import '../features/coming/features_screen.dart';
+import '../features/bible/annotations_screen.dart';
+import '../features/legal/terms_screen.dart';
+import '../features/legal/privacy_screen.dart';
+import '../features/carpark/car_park_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -102,6 +108,7 @@ final router = GoRouter(
     GoRoute(path: '/programs/year', builder: (c, s) => const YearProgramScreen()),
     GoRoute(path: '/moderation', builder: (c, s) => const ModerationScreen()),
     GoRoute(path: '/payments', builder: (c, s) => const PaymentScreen()),
+    GoRoute(path: '/admin/reconciliation', builder: (c, s) => const ReconciliationScreen()),
     GoRoute(path: '/admin/tithes', builder: (c, s) => const TithesAdminScreen()),
     GoRoute(path: '/tour', builder: (c, s) => const AppTourScreen()),
     GoRoute(path: '/admin/memberships', builder: (c, s) => const MembershipAdminScreen()),
@@ -122,12 +129,17 @@ final router = GoRouter(
     GoRoute(path: '/bible', builder: (c, s) => const BibleScreen()),
     GoRoute(path: '/bible/cache', builder: (c, s) => const BibleCacheScreen()),
     GoRoute(path: '/bible/plans', builder: (c, s) => const ReadingPlansScreen()),
+    GoRoute(path: '/bible/annotations', builder: (c, s) => const AnnotationsScreen()),
     GoRoute(path: '/support', builder: (c, s) => const SupportScreen()),
     GoRoute(path: '/support/report', builder: (c, s) => const ReportProblemScreen()),
     GoRoute(path: '/search', builder: (c, s) => const SearchScreen()),
     GoRoute(path: '/settings/accessibility', builder: (c, s) => const AccessibilitySettingsScreen()),
     GoRoute(path: '/settings/2fa', builder: (c, s) => const TwoFactorScreen()),
     GoRoute(path: '/settings/privacy', builder: (c, s) => const PrivacySettingsScreen()),
+    GoRoute(path: '/legal/terms', builder: (c, s) => const TermsScreen()),
+    GoRoute(path: '/legal/privacy', builder: (c, s) => const PrivacyScreen()),
+    GoRoute(path: '/features', builder: (c, s) => const FeaturesScreen()),
+    GoRoute(path: '/carpark', builder: (c, s) => const CarParkScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),

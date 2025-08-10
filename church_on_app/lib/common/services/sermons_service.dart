@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/sermon.dart';
 import 'security_service.dart';
 import '../models/page_result.dart';
+import 'billing_service.dart';
 
 class SermonsService {
   SermonsService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -20,19 +21,19 @@ class SermonsService {
         .map((s) => s.docs.map((d) => Sermon.fromDoc(d.id, d.data())).toList());
   }
 
-  Future<String> addSermon(String churchId, Sermon sermon) async {
+  Future<String> addSermon(String churchId, Sermon s) async {
     await ZipModeService().guardWrite(churchId);
-    final doc = await _firestore
-        .collection('churches')
-        .doc(churchId)
-        .collection('sermons')
-        .add(sermon.toMap());
+    // Quota check
+    final billing = await BillingService().fetch(churchId);
+    if (BillingService().isOverQuota(billing, resource: 'sermons') && (billing.graceUntil == null || billing.graceUntil!.isBefore(DateTime.now()))) {
+      throw Exception('Sermon quota exceeded for current plan. Upgrade to add more sermons.');
+    }
+    final doc = await _firestore.collection('churches').doc(churchId).collection('sermons').add(s.toMap());
     return doc.id;
   }
 
-  Future<void> incrementView(String churchId, String sermonId) async {
-    final ref = _firestore.collection('churches').doc(churchId).collection('sermons').doc(sermonId);
-    await ref.update({'viewCount': FieldValue.increment(1)});
+  Future<void> incrementView(String churchId, String id) async {
+    await _firestore.collection('churches').doc(churchId).collection('sermons').doc(id).update({'viewCount': FieldValue.increment(1)});
   }
 
   Future<PageResult<Sermon>> fetchSermonsPage(String churchId, {int limit = 20, DocumentSnapshot? startAfter}) async {
