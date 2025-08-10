@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event.dart';
 import 'security_service.dart';
 import '../models/page_result.dart';
+import 'billing_service.dart';
 
 class EventsService {
   EventsService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -43,6 +44,11 @@ class EventsService {
 
   Future<void> addEvent(String churchId, EventItem event) async {
     await ZipModeService().guardWrite(churchId);
+    // Quota check
+    final billing = await BillingService().fetch(churchId);
+    if (BillingService().isOverQuota(billing, resource: 'events') && (billing.graceUntil == null || billing.graceUntil!.isBefore(DateTime.now()))) {
+      throw Exception('Event quota exceeded for current plan. Upgrade to add more events.');
+    }
     await _firestore.collection('churches').doc(churchId).collection('events').add(event.toMap());
   }
 
