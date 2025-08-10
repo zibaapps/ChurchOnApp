@@ -76,6 +76,12 @@ class AdminPanelScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/admin/tenant-settings'),
           ),
+          ListTile(
+            leading: const Icon(Icons.fact_check),
+            title: const Text('Reconciliation'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/admin/reconciliation'),
+          ),
           const Divider(height: 32),
           FilledButton.tonalIcon(
             onPressed: churchId == null

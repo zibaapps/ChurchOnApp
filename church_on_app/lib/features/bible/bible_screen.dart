@@ -6,6 +6,7 @@ import '../../common/services/bible/bible_service.dart';
 import '../../common/providers/analytics_providers.dart';
 import '../../common/providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class BibleScreen extends ConsumerStatefulWidget {
   const BibleScreen({super.key});
@@ -114,6 +115,31 @@ class _BibleScreenState extends ConsumerState<BibleScreen> with SingleTickerProv
     }
   }
 
+  Future<void> _compare(int verseIndex) async {
+    final lines = <String>[];
+    for (final v in _versions) {
+      final chapter = await _repo.getChapter(version: v, book: _book, chapter: _chapter);
+      final text = (verseIndex < chapter.length) ? chapter[verseIndex] : '';
+      lines.add('${v.toUpperCase()}: $text');
+    }
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Compare ${_book} ${_chapter}:${verseIndex + 1}', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            ...lines.map((t) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(t))),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _filtered();
@@ -121,6 +147,13 @@ class _BibleScreenState extends ConsumerState<BibleScreen> with SingleTickerProv
       appBar: AppBar(
         title: const Text('Bible & Resources'),
         bottom: TabBar(controller: _tab, tabs: const [Tab(text: 'Read'), Tab(text: 'Resources'), Tab(text: 'Plans')]),
+        actions: [
+          IconButton(
+            tooltip: 'My Annotations',
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            onPressed: () => context.push('/bible/annotations'),
+          ),
+        ],
       ),
       body: TabBarView(
         controller: _tab,
@@ -195,6 +228,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> with SingleTickerProv
                       IconButton(tooltip: 'Bookmark', icon: const Icon(Icons.bookmark_add_outlined), onPressed: () => _bookmark(i)),
                       IconButton(tooltip: 'Highlight', icon: const Icon(Icons.border_color_outlined), onPressed: () => _highlight(i)),
                       IconButton(tooltip: 'Note', icon: const Icon(Icons.note_add_outlined), onPressed: () => _note(i)),
+                     IconButton(tooltip: 'Compare', icon: const Icon(Icons.compare_arrows_outlined), onPressed: () => _compare(i)),
                     ]),
                   ),
                 ),

@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../common/providers/auth_providers.dart';
+import '../../common/providers/tenant_providers.dart';
+import '../../common/widgets/app_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -43,17 +45,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _loading = true);
     try {
       final auth = ref.read(authServiceProvider);
-      if (_isRegister) {
-        await auth.registerWithEmail(email, password);
-      } else {
-        await auth.signInWithEmail(email, password);
-      }
+      final user = _isRegister
+          ? await auth.registerWithEmail(email, password)
+          : await auth.signInWithEmail(email, password);
       if (!mounted) return;
       if (_rememberMe) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('saved_email', email);
       }
-      Navigator.of(context).pop();
+      // Set active church if available and navigate
+      if (user.churchId != null) {
+        ref.read(activeChurchIdProvider.notifier).state = user.churchId;
+        context.go('/home');
+      } else {
+        context.go('/onboarding/church');
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Auth error: $e')));
@@ -70,6 +76,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            const SizedBox(height: 24),
+            const AppLogo(size: 96),
+            const SizedBox(height: 24),
             SwitchListTile.adaptive(
               title: Text(_isRegister ? 'Register' : 'Login'),
               value: _isRegister,
