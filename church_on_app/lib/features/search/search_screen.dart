@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../common/services/bible/bible_repository.dart';
 import '../../common/providers/tenant_providers.dart';
+import '../../common/providers/auth_providers.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -17,6 +18,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   List<_Result> _results = const [];
   bool _loading = false;
 
+  Future<void> _saveQuery() async {
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
+    final q = _q.text.trim();
+    if (user == null || q.isEmpty) return;
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('searches').add({
+      'query': q,
+      'createdAt': DateTime.now().toUtc().toIso8601String(),
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved search')));
+  }
+
   Future<void> _run() async {
     final query = _q.text.trim();
     if (query.isEmpty) {
@@ -25,6 +38,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
     setState(() => _loading = true);
     final churchId = ref.read(activeChurchIdProvider);
+    final user = ref.read(currentUserStreamProvider).valueOrNull;
 
     final out = <_Result>[];
 
@@ -58,16 +72,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     // My notes (bible_annotations type note)
-    final uid = FirebaseFirestore.instance.app.options.projectId; // placeholder, not ideal in this context
-    try {
-      final notes = await FirebaseFirestore.instance.collection('users').doc(uid).collection('bible_annotations').where('type', isEqualTo: 'note').limit(100).get();
-      for (final d in notes.docs) {
-        final text = (d.data()['text'] as String?) ?? '';
-        if (text.toLowerCase().contains(query.toLowerCase())) {
-          out.add(_Result('My Note', text));
+    if (user != null) {
+      try {
+        final notes = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('bible_annotations')
+            .where('type', isEqualTo: 'note')
+            .limit(200)
+            .get();
+        for (final d in notes.docs) {
+          final text = (d.data()['text'] as String?) ?? '';
+          if (text.toLowerCase().contains(query.toLowerCase())) {
+            out.add(_Result('My Note', text));
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     setState(() {
       _results = out.take(100).toList();
@@ -77,7 +98,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold
+(
       appBar: AppBar(title: const Text('Search')),
       body: Column(
         children: [
@@ -86,6 +108,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: Row(
               children: [
                 Expanded(child: TextField(controller: _q, decoration: const InputDecoration(hintText: 'Search Bible, sermons, notes'))),
+                const SizedBox(width: 8),
+                OutlinedButton(onPressed: _loading ? null : _saveQuery, child: const Text('Save')),
                 const SizedBox(width: 8),
                 FilledButton(onPressed: _loading ? null : _run, child: const Text('Go')),
               ],
