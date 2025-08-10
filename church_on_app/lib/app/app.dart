@@ -8,6 +8,8 @@ import '../common/providers/theme_providers.dart';
 import '../common/providers/tenant_providers.dart';
 import '../common/services/domain_service.dart';
 import '../common/providers/accessibility_providers.dart';
+import '../common/providers/app_init_providers.dart';
+import '../common/providers/notifications_providers.dart';
 
 class ChurchOnApp extends ConsumerWidget {
   const ChurchOnApp({super.key});
@@ -27,6 +29,18 @@ class ChurchOnApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     _bootstrapDomain(ref);
+
+    // Initialize core services (Firestore persistence, messaging, remote config)
+    ref.watch(appInitProvider);
+
+    // Re-apply notification topics when prefs or active church changes
+    ref.listen(notificationPrefsProvider, (_, __) {
+      ref.read(notificationManagerProvider).apply();
+    });
+    ref.listen(activeChurchIdProvider, (_, __) {
+      ref.read(notificationManagerProvider).apply();
+    });
+
     final scale = ref.watch(textScaleProvider);
     return MaterialApp.router(
       title: 'Church On App',

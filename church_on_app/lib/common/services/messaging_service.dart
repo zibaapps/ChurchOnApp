@@ -43,4 +43,10 @@ class MessagingService {
       } catch (_) {}
     }
   }
+
+  static Future<void> showLocalTest({required String title, required String body}) async {
+    const android = AndroidNotificationDetails('default', 'Notifications', importance: Importance.defaultImportance);
+    const details = NotificationDetails(android: android);
+    await _fln.show(DateTime.now().millisecondsSinceEpoch % 100000, title, body, details);
+  }
 }

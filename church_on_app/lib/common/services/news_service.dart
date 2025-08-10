@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/news_item.dart';
 import 'security_service.dart';
 import '../models/page_result.dart';
+import 'billing_service.dart';
 
 class NewsService {
   NewsService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -35,6 +36,11 @@ class NewsService {
 
   Future<void> addNews(String churchId, NewsItem n) async {
     await ZipModeService().guardWrite(churchId);
+    // Quota check
+    final billing = await BillingService().fetch(churchId);
+    if (BillingService().isOverQuota(billing, resource: 'news') && (billing.graceUntil == null || billing.graceUntil!.isBefore(DateTime.now()))) {
+      throw Exception('News quota exceeded for current plan. Upgrade to add more news items.');
+    }
     await _firestore.collection('churches').doc(churchId).collection('news').add(n.toMap());
   }
 

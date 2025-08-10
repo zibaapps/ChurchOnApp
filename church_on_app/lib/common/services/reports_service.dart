@@ -48,4 +48,14 @@ class ReportsService {
     await ZipModeService().guardWrite(churchId);
     await _firestore.collection('churches').doc(churchId).collection('reports').add(r.toMap());
   }
+
+  Future<void> updateVisibility(String churchId, String reportId, ReportVisibility v) async {
+    await ZipModeService().guardWrite(churchId);
+    await _firestore.collection('churches').doc(churchId).collection('reports').doc(reportId).update({'visibility': v.name});
+  }
+
+  Future<void> assignLeader(String churchId, String reportId, String? leaderChurchId) async {
+    await ZipModeService().guardWrite(churchId);
+    await _firestore.collection('churches').doc(churchId).collection('reports').doc(reportId).update({'assignedLeaderChurchId': leaderChurchId});
+  }
 }
