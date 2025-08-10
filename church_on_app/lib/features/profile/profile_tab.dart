@@ -9,6 +9,9 @@ import '../../common/services/security_service.dart';
 import 'emergency_contacts_screen.dart';
 import '../../common/providers/notifications_providers.dart';
 import '../../common/services/privacy_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../../common/services/messaging_service.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -67,6 +70,39 @@ class ProfileTab extends ConsumerWidget {
                 const Divider(),
                 Text('Notifications', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.notifications_active_outlined),
+                  title: const Text('Enable Push Notifications'),
+                  subtitle: const Text('Request permission and get device token'),
+                  trailing: FilledButton.tonal(
+                    onPressed: () async {
+                      try {
+                        // Request permissions (iOS/macOS)
+                        await FirebaseMessaging.instance.requestPermission();
+                        final token = await FirebaseMessaging.instance.getToken();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('FCM token: ${token ?? 'N/A'}')));
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('FCM error: $e')));
+                        }
+                      }
+                    },
+                    child: const Text('Enable'),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.notification_important_outlined),
+                  title: const Text('Send Test Notification'),
+                  subtitle: const Text('Shows a local notification to verify setup'),
+                  trailing: OutlinedButton(
+                    onPressed: () async {
+                      await MessagingService.showLocalTest(title: 'Test Notification', body: 'This is a test');
+                    },
+                    child: const Text('Test'),
+                  ),
+                ),
                 Consumer(builder: (context, ref, _) {
                   final prefs = ref.watch(notificationPrefsProvider);
                   return Column(
