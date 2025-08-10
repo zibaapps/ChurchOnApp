@@ -49,6 +49,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Widget build(BuildContext context) {
     final name = ref.watch(tenantDisplayNameProvider);
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: AnimatedOpacity(
           opacity: 1,
