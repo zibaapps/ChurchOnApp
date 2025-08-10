@@ -43,6 +43,7 @@ dependencies:
   firebase_analytics: ^11.1.0
   firebase_remote_config: ^5.0.4
   cloud_functions: ^5.0.3
+  firebase_performance: ^0.10.0+8
 
   # Routing & State
   go_router: ^14.2.7
