@@ -12,6 +12,8 @@ class SeedService {
     batch.set(churchRef, {
       'id': churchId,
       'name': 'Church $churchId',
+      'city': 'Lusaka',
+      'iconUrl': 'https://picsum.photos/seed/$churchId/200/200',
       'createdAt': DateTime.now().toUtc().toIso8601String(),
     }, SetOptions(merge: true));
 
@@ -127,9 +129,11 @@ class SeedService {
       await _firestore.collection('churches').doc(id).set({
         'id': id,
         'name': id.replaceAll('_', ' ').toUpperCase(),
+        'city': 'Lusaka',
+        'iconUrl': 'https://picsum.photos/seed/$id/200/200',
         'createdAt': DateTime.now().toUtc().toIso8601String(),
       }, SetOptions(merge: true));
-      await _firestore.collection('domain_map').doc('$id.churchapp.cloud').set({'churchId': id});
+      await _firestore.collection('domains').doc('$id.churchapp.cloud').set({'churchId': id});
       await _firestore.collection('churches').doc(id).collection('tenant_settings').doc('billing').set({'plan': 'free'});
       await seedTenant(id);
     }
