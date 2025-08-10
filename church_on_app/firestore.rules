@@ -110,6 +110,12 @@ service cloud.firestore {
         allow create: if isMember(churchId) && uid() == request.resource.data.userId;
         allow update, delete: if false;
       }
+
+      match /service_issues/{docId} {
+        allow read: if isMember(churchId) || isSuperAdmin();
+        allow create: if isMember(churchId);
+        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
+      }
     }
 
     // Global games leaderboard only stores opt-in submissions
