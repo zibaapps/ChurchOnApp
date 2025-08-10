@@ -50,6 +50,7 @@ import '../features/support/report_problem_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/accessibility_settings_screen.dart';
 import '../features/settings/two_factor_screen.dart';
+import '../features/settings/privacy_settings_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -124,6 +125,7 @@ final router = GoRouter(
     GoRoute(path: '/search', builder: (c, s) => const SearchScreen()),
     GoRoute(path: '/settings/accessibility', builder: (c, s) => const AccessibilitySettingsScreen()),
     GoRoute(path: '/settings/2fa', builder: (c, s) => const TwoFactorScreen()),
+    GoRoute(path: '/settings/privacy', builder: (c, s) => const PrivacySettingsScreen()),
     GoRoute(
       path: '/ar/scan',
       builder: (context, state) => const ArScanScreen(),
