@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../common/providers/tenant_providers.dart';
 import '../../common/services/invite_service.dart';
@@ -16,7 +17,16 @@ class InviteListScreen extends ConsumerWidget {
     }
     final stream = InviteService().streamInvites(churchId);
     return Scaffold(
-      appBar: AppBar(title: const Text('Invite Cards')),
+      appBar: AppBar(
+        title: const Text('Invite Cards'),
+        actions: [
+          IconButton(
+            tooltip: 'Test Deep Link',
+            icon: const Icon(Icons.link),
+            onPressed: () => context.go('/onboarding?invite=DEMO123'),
+          )
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.of(context).pushNamed('/admin/add-invite'),
         child: const Icon(Icons.add),
