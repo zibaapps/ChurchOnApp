@@ -52,7 +52,7 @@ class PaymentService {
         if (_airtel == null) throw Exception('Airtel provider not configured');
         providerRef = await _airtel!.initiatePayment(reference: reference, payerMsisdn: msisdn ?? '', amountZMW: amountZMW, currency: 'ZMW');
       } else {
-        // Placeholder PayPal
+        // Placeholder PayPal immediate success
         status = 'success';
       }
 

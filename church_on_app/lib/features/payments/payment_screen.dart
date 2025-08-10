@@ -173,9 +173,40 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           const SizedBox(height: 12),
           FilledButton.icon(
             style: FilledButton.styleFrom(backgroundColor: _method == 'paypal' ? Theme.of(context).colorScheme.primary : null),
-            onPressed: null, // Implement PayPal integration when ready
+            onPressed: _loading || amt <= 0 || churchId == null || user == null || _method != 'paypal'
+                ? null
+                : () async {
+                    setState(() => _loading = true);
+                    await ref.read(analyticsServiceProvider).logGiveStart(churchId: churchId!, userId: user.uid, amount: amt, method: 'paypal');
+                    final res = await PaymentService().processPayment(
+                      churchId: churchId,
+                      amountZMW: amt,
+                      method: PaymentMethod.paypal,
+                      userId: user.uid,
+                    );
+                    if (!mounted) return;
+                    setState(() => _loading = false);
+                    final msg = res.success ? 'PayPal payment recorded' : 'Payment failed: ${res.error}';
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                    if (res.success) {
+                      await ref.read(analyticsServiceProvider).logGiveSuccess(churchId: churchId!, userId: user.uid, amount: amt, method: 'paypal', reference: res.reference);
+                      final churchName = ref.read(tenantDisplayNameProvider);
+                      final bytes = await ReceiptService().buildPaymentReceipt(
+                        churchName: churchName,
+                        userName: user.displayName ?? user.email ?? user.uid,
+                        amountZmw: amt,
+                        method: 'PayPal',
+                        reference: res.reference ?? '-',
+                        createdAt: DateTime.now(),
+                      );
+                      await ReceiptService().sharePdf(bytes, filename: 'receipt_paypal.pdf');
+                    }
+                    if (res.success && mounted) await showSuccessAnimation(context, message: 'Thank you! Payment successful');
+                  },
             icon: const Icon(Icons.account_balance_wallet),
-            label: const Text('Pay with PayPal (coming soon)'),
+            label: _loading && _method == 'paypal'
+                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Pay with PayPal'),
           ),
         ],
       ),
