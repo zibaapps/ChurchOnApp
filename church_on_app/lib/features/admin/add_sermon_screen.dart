@@ -5,6 +5,7 @@ import '../../common/models/sermon.dart';
 import '../../common/providers/tenant_providers.dart';
 import '../../common/providers/sermons_providers.dart';
 import '../../common/services/thumbnail_service.dart';
+import '../../common/services/remote_config_service.dart';
 
 class AddSermonScreen extends ConsumerStatefulWidget {
   const AddSermonScreen({super.key});
@@ -26,6 +27,7 @@ class _AddSermonScreenState extends ConsumerState<AddSermonScreen> {
   @override
   Widget build(BuildContext context) {
     final churchId = ref.watch(activeChurchIdProvider);
+    final isProLive = RemoteConfigService().proLiveStream;
     return Scaffold(
       appBar: AppBar(title: const Text('Add Sermon')),
       body: Form(
@@ -54,12 +56,13 @@ class _AddSermonScreenState extends ConsumerState<AddSermonScreen> {
               decoration: const InputDecoration(labelText: 'On-demand Media URL (S3/Storage/MP3/MP4/YouTube)')
             ),
             const Divider(height: 32),
-            SwitchListTile.adaptive(
-              title: const Text('Live Streaming'),
-              value: _isLive,
-              onChanged: (v) => setState(() => _isLive = v),
-            ),
-            if (_isLive) ...[
+            if (isProLive)
+              SwitchListTile.adaptive(
+                title: const Text('Live Streaming'),
+                value: _isLive,
+                onChanged: (v) => setState(() => _isLive = v),
+              ),
+            if (isProLive && _isLive) ...[
               DropdownButtonFormField<LivePlatform>(
                 value: _platform,
                 items: const [
