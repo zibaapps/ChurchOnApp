@@ -215,6 +215,18 @@ class ProfileTab extends ConsumerWidget {
                   onTap: () => context.push('/support'),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Privacy Policy'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/legal/privacy'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: const Text('Terms & Conditions'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/legal/terms'),
+                ),
+                ListTile(
                   leading: const Icon(Icons.download),
                   title: const Text('Request Data Export'),
                   onTap: () async {

@@ -135,7 +135,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextButton(onPressed: () => context.push('/support'), child: const Text('Privacy & Terms')),
+                          TextButton(onPressed: () => context.push('/legal/privacy'), child: const Text('Privacy')),
+                          TextButton(onPressed: () => context.push('/legal/terms'), child: const Text('Terms')),
                           TextButton(onPressed: () => context.push('/settings/2fa'), child: const Text('Security')),
                         ],
                       ),
