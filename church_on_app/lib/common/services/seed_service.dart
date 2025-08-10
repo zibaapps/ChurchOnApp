@@ -38,6 +38,13 @@ class SeedService {
         'role': u['role'],
         'joinedAt': DateTime.now().toUtc().toIso8601String(),
       });
+      // Mirror membership under user for directory screens/providers
+      final umRef = userRef.collection('memberships').doc(churchId);
+      batch.set(umRef, {
+        'churchId': churchId,
+        'role': u['role'],
+        'joinedAt': DateTime.now().toUtc().toIso8601String(),
+      });
     }
 
     // Sample sermons
