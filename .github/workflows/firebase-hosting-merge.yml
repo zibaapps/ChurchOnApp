@@ -13,7 +13,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.10.6'   # upgrade to a Flutter version with Dart 3.4.3+
+          flutter-version: '3.22.2'   # upgrade to a Flutter version with Dart 3.4.3+
 
       - name: Build Flutter Web
         run: flutter build web --release
