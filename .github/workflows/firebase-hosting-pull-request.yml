@@ -19,11 +19,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Flutter (latest stable)
+      # Setup Flutter (pin to specific version for stability)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.7.12'  # replace with your local Flutter version
 
       # Cache Flutter dependencies to speed up builds
       - name: Cache Flutter dependencies
