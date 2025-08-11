@@ -8,31 +8,16 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.12'
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            church_on_app/.dart_tool
-          key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Get Flutter dependencies
-        working-directory: church_on_app
-        run: flutter pub get
+          flutter-version: '3.10.5'   # upgrade to a Flutter version with Dart 3.4.3+
 
       - name: Build Flutter Web
-        working-directory: church_on_app
         run: flutter build web --release
+        working-directory: church_on_app
 
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
