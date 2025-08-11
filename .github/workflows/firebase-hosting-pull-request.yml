@@ -15,36 +15,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout your repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Flutter (pin to specific version for stability)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.12'  # replace with your local Flutter version
+          flutter-version: '3.7.12'
 
-      # Cache Flutter dependencies to speed up builds
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.pub-cache
-            ${{ github.workspace }}/.dart_tool
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.yaml') }}
+            church_on_app/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-flutter-
 
-      # Get Flutter dependencies
       - name: Flutter pub get
+        working-directory: church_on_app
         run: flutter pub get
 
-      # Build Flutter web release
       - name: Build Flutter web (release)
+        working-directory: church_on_app
         run: flutter build web --release
 
-      # Deploy to Firebase Hosting preview channel
       - name: Deploy to Firebase Hosting (Preview)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
