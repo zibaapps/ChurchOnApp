@@ -3,7 +3,7 @@ name: Deploy to Firebase Hosting on merge
 on:
   push:
     branches:
-      - Church-On-App-with-Cursor  # your target branch on merge
+      - Church-On-App-with-Cursor # target branch for deployment
 
 jobs:
   build_and_deploy:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'  # pin to your Flutter version for consistency
+          flutter-version: '3.22.2' # pin to your Flutter version
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
@@ -42,5 +42,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          # If your firebase.json is not in root, uncomment and adjust entryPoint:
-          # entryPoint: church_on_app  
+          entryPoint: church_on_app
