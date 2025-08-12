@@ -1,185 +1,489 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function uid() { return request.auth.uid; }
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    // =================================
+    // Helper Functions
+    // =================================
+
+    function getUserDoc(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
+    }
+    function getUserData(userId) {
+      return getUserDoc(userId).data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isApproved() {
+      // For a user to be 'approved' in the system context for general access,
+      // their Firestore document must exist and have status == 'approved'.
+      return isSignedIn() && getUserDoc(request.auth.uid).exists && getUserData(request.auth.uid).status == 'approved';
+    }
+
     function isSuperAdmin() {
-      return isSignedIn() && (
-        request.auth.token.role == 'superadmin' ||
-        get(/databases/$(database)/documents/users/$(uid())).data.role == 'superAdmin'
-      );
+      return isApproved() && getUserData(request.auth.uid).role == 'Super Admin';
     }
 
-    // Membership-based access
-    function isMember(churchId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/churches/$(churchId)/memberships/$(uid()));
+    function hasGlobalRole(roleName) {
+      return isApproved() && getUserData(request.auth.uid).role == roleName;
     }
 
-    function hasRole(churchId, role) {
-      return isMember(churchId) && get(/databases/$(database)/documents/churches/$(churchId)/memberships/$(uid())).data.role == role;
+    function isUserAssignedToTenant(userId, tenantId) {
+      // Ensures the user's document has a tenantId that matches the one being checked.
+      // This function now takes userId as a parameter for more general use.
+      return isApproved() && getUserData(userId).tenantId == tenantId;
     }
 
-    // Churches collection
-    match /churches/{churchId} {
-      allow read: if true; // public metadata
-      allow write: if isSuperAdmin();
-
-      // Subcollections
-      match /memberships/{userId} {
-        allow read: if isMember(churchId) || isSuperAdmin();
-        allow write: if uid() == userId || hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /tenant_settings/{docId} {
-        allow read: if true;
-        allow write: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /invites/{inviteId} {
-        allow read: if true;
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /sermons/{docId} {
-        allow read: if true; // public read of sermons
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /events/{docId} {
-        allow read: if true;
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-        // RSVP field updates allowed to members on the attendees map
-        allow update: if isMember(churchId) && request.resource.data.diff(resource.data).changedKeys().hasOnly(['attendees']);
-      }
-
-      match /announcements/{docId} {
-        allow read: if true;
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /news/{docId} {
-        allow read: if resource.data.status == 'published' || hasRole(churchId, 'admin') || isSuperAdmin();
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /reports/{docId} {
-        // Authors and admins can read; pastors create pastor reports; board leaders see board; bishops see pastor reports assigned to them
-        allow read: if
-          hasRole(churchId, 'admin') ||
-          isSuperAdmin() ||
-          (isMember(churchId) && request.auth.uid == resource.data.createdBy) ||
-          (hasRole(churchId, 'boardLeader') && resource.data.visibility == 'board') ||
-          (hasRole(churchId, 'bishop') && resource.data.visibility == 'bishop' && resource.data.assignedLeaderChurchId == churchId);
-
-        allow create: if
-          hasRole(churchId, 'admin') ||
-          hasRole(churchId, 'pastor') ||
-          isSuperAdmin();
-
-        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /payments/{docId} {
-        allow read: if uid() == resource.data.userId || hasRole(churchId, 'admin') || isSuperAdmin();
-        allow create: if isMember(churchId) && uid() == request.resource.data.userId;
-        // Allow client to update only status/updatedAt fields on own document; full updates reserved for server
-        allow update: if (
-          uid() == resource.data.userId && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status','updatedAt'])
-        ) || isSuperAdmin();
-        allow delete: if false;
-      }
-
-      match /contribution_pools/{docId} {
-        allow read: if true;
-        allow create, update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /tithes/{docId} {
-        allow read: if uid() == resource.data.userId || hasRole(churchId, 'pastor') || hasRole(churchId, 'admin') || isSuperAdmin();
-        allow create, update: if uid() == request.resource.data.userId || hasRole(churchId, 'pastor') || hasRole(churchId, 'admin') || isSuperAdmin();
-        allow delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      // Chat threads & messages
-      match /chat_threads/{threadId} {
-        allow read: if isMember(churchId);
-        allow create: if isMember(churchId);
-        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-        match /messages/{messageId} {
-          allow read: if isMember(churchId);
-          allow create: if isMember(churchId) && uid() == request.resource.data.userId;
-          allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin() || uid() == resource.data.userId;
-        }
-      }
-
-      // Per-church game scores
-      match /games_scores/{scoreId} {
-        allow read: if true;
-        allow create: if isMember(churchId) && uid() == request.resource.data.userId;
-        allow update, delete: if false;
-      }
-
-      match /service_issues/{docId} {
-        allow read: if isMember(churchId) || isSuperAdmin();
-        allow create: if isMember(churchId);
-        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-        match /audit/{auditId} {
-          allow read: if hasRole(churchId, 'admin') || isSuperAdmin();
-          allow write: if isSuperAdmin(); // written by server/admin SDK only
-        }
-      }
-
-      match /testimonies/{docId} {
-        allow read: if resource.data.status == 'approved' || hasRole(churchId, 'admin') || isSuperAdmin();
-        allow create: if isMember(churchId);
-        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin();
-      }
-
-      match /prayers/{docId} {
-        allow read: if isMember(churchId);
-        allow create: if isMember(churchId);
-        allow update, delete: if hasRole(churchId, 'admin') || isSuperAdmin() || (uid() == resource.data.userId);
-      }
+    function hasRoleAndIsAssignedToTenant(roleName, tenantId) {
+      return hasGlobalRole(roleName) && isUserAssignedToTenant(request.auth.uid, tenantId);
     }
 
-    // Global games leaderboard only stores opt-in submissions
-    match /global_games_scores/{scoreId} {
-      allow read: if true;
-      allow create: if isSignedIn();
+    function isPastorOfTenant(tenantId) { return hasRoleAndIsAssignedToTenant('Pastor', tenantId); }
+    function isAssistantPastorOfTenant(tenantId) { return hasRoleAndIsAssignedToTenant('Assistant Pastor', tenantId); }
+    function isSecretaryOfTenant(tenantId) { return hasRoleAndIsAssignedToTenant('Secretary', tenantId); }
+    function isTreasurerOfTenant(tenantId) { return hasRoleAndIsAssignedToTenant('Treasurer', tenantId); }
+    function isUsherOfTenant(tenantId) { return hasRoleAndIsAssignedToTenant('Usher', tenantId); }
+    function isChurchMemberOfTenant(tenantId) { return hasRoleAndIsAssignedToTenant('Church Member', tenantId); }
+
+    function isContentAdminOfTenant(tenantId) {
+      return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId);
+    }
+    function isEventAdminOfTenant(tenantId) {
+      return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId) || isTreasurerOfTenant(tenantId);
+    }
+    function isProjectAdminOfTenant(tenantId) {
+      return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId) || isTreasurerOfTenant(tenantId);
+    }
+    function isUserApprovalAdminOfTenant(tenantId) {
+      // These roles can manage user statuses within their tenant (but not elevate roles beyond their own scope)
+      return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId);
+    }
+    function isPrayerModeratorOfTenant(tenantId) {
+      return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId);
+    }
+    function isDesignatedTenantAdmin(tenantId) {
+      // Defines who can edit specific tenant settings (e.g., app display name, motto)
+      // For this, we'll consider Pastor, Assistant Pastor, Secretary as primary admins of a tenant.
+      return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId);
+    }
+
+    function incomingDataHasCorrectTenantId(tenantId) {
+      return request.resource.data.tenantId == tenantId;
+    }
+
+    function allowedTenantAdminUpdateFields() {
+      // Tenant admins (Pastor, Secretary, etc.) can update these specific fields on their own tenant document.
+      // Critical fields like payment details, overall tenant name, or tenant status are managed by SuperAdmin.
+      return ['appDisplayName', 'chatAppName', 'logoUrl', 'motto', 'address', 'phoneNumber', 'websiteUrl', 'bankDetails', 'mobileMoneyDetails', 'socialMediaLinks', 'liveStreamUrl', 'primaryThemeColor', 'updatedAt'];
+    }
+    
+    // =================================
+    // Collections
+    // =================================
+
+   match /users/{userId} {
+  allow read: if isSignedIn() && (
+                request.auth.uid == userId ||
+                isSuperAdmin() ||
+                (isApproved() && resource.data.tenantId != null && 
+                 isUserApprovalAdminOfTenant(resource.data.tenantId) && 
+                 isUserAssignedToTenant(request.auth.uid, resource.data.tenantId))
+              );
+
+  allow create: if (
+                  // Case 1: User self-registering (must be signed in & sending correct info)
+                  isSignedIn() && request.auth.uid == userId &&
+                  request.resource.data.email == request.auth.token.email &&
+                  request.resource.data.tenantId != null &&
+                  !exists(/databases/$(database)/documents/users/$(userId)) &&
+                  request.resource.data.role == 'Church Member' &&
+                  request.resource.data.status == 'approved'
+                ) || (
+                  // Case 2: SuperAdmin creating user
+                  isSuperAdmin() &&
+                  request.resource.data.tenantId != null &&
+                  request.resource.data.status == 'approved' &&
+                  request.resource.data.role != 'Super Admin' &&
+                  request.resource.data.email != null
+                ) || (
+                  // ✅ NEW: Allow backend function (Admin SDK) to create user
+                  request.auth == null && 
+                  request.resource.data.uid == userId && 
+                  request.resource.data.email != null &&
+                  request.resource.data.tenantId != null &&
+                  request.resource.data.role == 'Church Member' &&
+                  request.resource.data.status == 'approved'
+                );
+
+  allow update: if isSignedIn() && (
+                  (request.auth.uid == userId &&
+                   !(request.resource.data.role != resource.data.role) &&
+                   !(request.resource.data.status != resource.data.status) &&
+                   !(request.resource.data.tenantId != resource.data.tenantId)) ||
+                  isSuperAdmin() ||
+                  (isApproved() && resource.data.tenantId != null && 
+                   isUserApprovalAdminOfTenant(resource.data.tenantId) &&
+                   isUserAssignedToTenant(request.auth.uid, resource.data.tenantId) &&
+                   request.resource.data.role != 'Super Admin' &&
+                   (request.resource.data.role != 'Pastor' || 
+                    (hasGlobalRole('Pastor') && request.auth.uid == userId)))
+                );
+
+  allow delete: if isSuperAdmin();
+}
+
+    match /tenants/{tenantDocId} {
+      allow list: if isSuperAdmin(); // Only SuperAdmins can list all tenants
+      allow read: if isSuperAdmin() || (isApproved() && tenantDocId == getUserData(request.auth.uid).tenantId); // SuperAdmin or member of that tenant
+      allow create: if isSuperAdmin(); // Only SuperAdmins can create new tenants
+      allow update: if isSuperAdmin() || // SuperAdmins can update anything
+                      ( // Tenant Admins (Pastor, Secretary, etc.) can update specific fields for their own tenant
+                        isDesignatedTenantAdmin(tenantDocId) &&
+                        isUserAssignedToTenant(request.auth.uid, tenantDocId) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedTenantAdminUpdateFields()) &&
+                        // Prevent tenant admins from changing these critical fields directly (SuperAdmin should handle them)
+                        !( 'name' in request.resource.data && request.resource.data.name != resource.data.name ) &&
+                        !( 'status' in request.resource.data && request.resource.data.status != resource.data.status ) &&
+                        !( 'paymentStatus' in request.resource.data && request.resource.data.paymentStatus != resource.data.paymentStatus ) &&
+                        !( 'totalFee' in request.resource.data && request.resource.data.totalFee != resource.data.totalFee ) &&
+                        !( 'amountPaid' in request.resource.data && request.resource.data.amountPaid != resource.data.amountPaid ) &&
+                        !( 'paymentDueDate' in request.resource.data && request.resource.data.paymentDueDate != resource.data.paymentDueDate ) &&
+                        !( 'paymentNotes' in request.resource.data && request.resource.data.paymentNotes != resource.data.paymentNotes ) &&
+                        !( 'parentTenantId' in request.resource.data && request.resource.data.parentTenantId != resource.data.parentTenantId ) && 
+                        !( 'tenantType' in request.resource.data && request.resource.data.tenantType != resource.data.tenantType ) 
+                      );
+      allow delete: if isSuperAdmin(); // Only SuperAdmins can delete tenants
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && isApproved() && 
+                    (
+                      isSuperAdmin() || // SuperAdmin can read any notification (client query will filter by tenant)
+                      (request.auth.uid == resource.data.userId && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) // Regular user can read their own notifications if they belong to that notification's tenant
+                    );
+      allow update: if isSignedIn() && isApproved() && request.auth.uid == resource.data.userId && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId) &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updatedAt']) &&
+                    request.resource.data.read is bool;
+      allow create: if false; // Notifications are created by backend functions
+      allow delete: if isSignedIn() && isApproved() && request.auth.uid == resource.data.userId && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId); // User can delete their own notifications
+    }
+
+    // GENERAL CONTENT RULE (Sermons, Devotionals, NewsArticles, Programs)
+    function canManageGeneralContent(tenantId) {
+        return isSuperAdmin() || isContentAdminOfTenant(tenantId);
+    }
+    match /sermons/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageGeneralContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageGeneralContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /devotionals/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageGeneralContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageGeneralContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /newsArticles/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageGeneralContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageGeneralContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /programs/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageGeneralContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageGeneralContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+
+    // EVENTS, GALLERY, RESOURCES, GROUPS/MINISTRIES, VOLUNTEER OPPORTUNITIES
+    function canManageSecondaryContent(tenantId) {
+        return isSuperAdmin() || isEventAdminOfTenant(tenantId);
+    }
+    match /events/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null && (
+                    isSuperAdmin() || // SuperAdmin can read any event.
+                    isUserAssignedToTenant(request.auth.uid, resource.data.tenantId) || // User can read events belonging to their tenant.
+                    (resource.data.isInterchurch == true && getUserData(request.auth.uid).tenantId in resource.data.participatingTenantIds) // User can read interchurch events they are participating in.
+                  );
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageSecondaryContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageSecondaryContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /galleryItems/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageSecondaryContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageSecondaryContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /resources/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageSecondaryContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageSecondaryContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /groupsMinistries/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageSecondaryContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageSecondaryContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+    match /volunteerOpportunities/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      canManageSecondaryContent(request.resource.data.tenantId) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              canManageSecondaryContent(resource.data.tenantId) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+
+    match /projects/{projectId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      (isSuperAdmin() || isProjectAdminOfTenant(request.resource.data.tenantId)) &&
+                      (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId);
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              (isSuperAdmin() || isProjectAdminOfTenant(resource.data.tenantId)) &&
+                              (isSuperAdmin() || isUserAssignedToTenant(request.auth.uid, resource.data.tenantId));
+    }
+
+    match /prayerRequests/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      (resource.data.status == 'approved' && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) ||
+                      (resource.data.status == 'active' && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) || 
+                      (resource.data.status == 'answered' && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) || 
+                      (request.auth.uid == resource.data.userId && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) || // User can read their own
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) // Admins can read any
+                    );
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.status == 'pending' && // New requests are pending
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) &&
+                      isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) &&
+                      isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /testimonies/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      (resource.data.status == 'approved' && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) ||
+                      (request.auth.uid == resource.data.userId && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) ||
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId))
+                    );
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.status == 'pending' && // New testimonies are pending
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) &&
+                      isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) &&
+                      isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /prayerPartnerRequests/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) ||
+                      (request.auth.uid == resource.data.userId)
+                    ) && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) &&
+                              isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /prayerPartnerOffers/{docId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) ||
+                      (request.auth.uid == resource.data.userId)
+                    ) && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              (isSuperAdmin() || isPrayerModeratorOfTenant(resource.data.tenantId)) &&
+                              isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /givingRecords/{recordId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                     (
+                       (isSuperAdmin() || isPastorOfTenant(resource.data.tenantId)) || 
+                       (request.auth.uid == resource.data.userId && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId)) 
+                     );
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null && 
+                       request.resource.data.userId == request.auth.uid &&
+                       incomingDataHasCorrectTenantId(request.resource.data.tenantId) && 
+                       request.resource.data.tenantId == getUserData(request.auth.uid).tenantId; 
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null && 
+                               (isSuperAdmin() || isPastorOfTenant(resource.data.tenantId));
+    }
+
+    match /givingGoals/{goalId} {
+      allow read, update, delete: if isSignedIn() && isApproved() && 
+                                            resource.data.userId == request.auth.uid &&
+                                            isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create: if isSignedIn() && isApproved() &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId &&
+                      incomingDataHasCorrectTenantId(request.resource.data.tenantId);
+    }
+
+    match /usherReports/{reportId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      isSuperAdmin() ||
+                      isPastorOfTenant(resource.data.tenantId) ||
+                      isAssistantPastorOfTenant(resource.data.tenantId) ||
+                      isSecretaryOfTenant(resource.data.tenantId) ||
+                      isTreasurerOfTenant(resource.data.tenantId) ||
+                      (isUsherOfTenant(resource.data.tenantId) && request.auth.uid == resource.data.submittedBy) // Usher can read their own reports
+                    ) && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      (isUsherOfTenant(request.resource.data.tenantId) || isSuperAdmin()) && 
+                      request.resource.data.submittedBy == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              (isSuperAdmin() || (isUsherOfTenant(resource.data.tenantId) && request.auth.uid == resource.data.submittedBy)) && 
+                              isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /secretaryReports/{reportId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      isSuperAdmin() ||
+                      isPastorOfTenant(resource.data.tenantId) ||
+                      isAssistantPastorOfTenant(resource.data.tenantId) ||
+                      (isSecretaryOfTenant(resource.data.tenantId) && request.auth.uid == resource.data.submittedBy)
+                    ) && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      (isSecretaryOfTenant(request.resource.data.tenantId) || isSuperAdmin()) &&
+                      request.resource.data.submittedBy == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              (isSuperAdmin() || (isSecretaryOfTenant(resource.data.tenantId) && request.auth.uid == resource.data.submittedBy)) &&
+                              isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /pastorReports/{reportId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (
+                      isSuperAdmin() || 
+                      ((isPastorOfTenant(resource.data.tenantId) || isAssistantPastorOfTenant(resource.data.tenantId)) && request.auth.uid == resource.data.submittedBy) 
+                    ) && isUserAssignedToTenant(request.auth.uid, resource.data.tenantId); 
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      (isPastorOfTenant(request.resource.data.tenantId) || isAssistantPastorOfTenant(request.resource.data.tenantId) || isSuperAdmin()) &&
+                      request.resource.data.submittedBy == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow update, delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                              (isSuperAdmin() || ((isPastorOfTenant(resource.data.tenantId) || isAssistantPastorOfTenant(resource.data.tenantId)) && request.auth.uid == resource.data.submittedBy)) &&
+                              isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /financialReports/{reportId} {
+      allow read: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                    (isSuperAdmin() || isPastorOfTenant(resource.data.tenantId) || isTreasurerOfTenant(resource.data.tenantId)) &&
+                    isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create, update, delete: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                                     (isSuperAdmin() || isTreasurerOfTenant(request.resource.data.tenantId)) && 
+                                     (isSuperAdmin() || request.resource.data.tenantId == getUserData(request.auth.uid).tenantId); 
+    }
+
+    function canReportServiceIssue(tenantId) {
+        return isPastorOfTenant(tenantId) || isAssistantPastorOfTenant(tenantId) || isSecretaryOfTenant(tenantId) || isUsherOfTenant(tenantId) || isTreasurerOfTenant(tenantId);
+    }
+    match /serviceIssues/{issueId} {
+      allow read, update: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                            (isSuperAdmin() || canReportServiceIssue(resource.data.tenantId)) &&
+                            isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+      allow create: if isSignedIn() && isApproved() && request.resource.data.tenantId != null &&
+                      (isSuperAdmin() || canReportServiceIssue(request.resource.data.tenantId)) &&
+                      request.resource.data.submittedBy == request.auth.uid &&
+                      request.resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow delete: if isSignedIn() && isApproved() && resource.data.tenantId != null &&
+                      isSuperAdmin() &&
+                      isUserAssignedToTenant(request.auth.uid, resource.data.tenantId);
+    }
+
+    match /chats/{chatId}/messages/{messageId} {
+      function isChatParticipant(chatDocId) { 
+        let uids = chatDocId.split('_');
+        return request.auth.uid == uids[0] || request.auth.uid == uids[1];
+      }
+      allow read: if isSignedIn() && isApproved() && isChatParticipant(chatId) && 
+                     resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow create: if isSignedIn() && isApproved() && isChatParticipant(chatId) && 
+                       request.resource.data.senderId == request.auth.uid &&
+                       request.resource.data.tenantId == getUserData(request.auth.uid).tenantId &&
+                       incomingDataHasCorrectTenantId(request.resource.data.tenantId); 
       allow update, delete: if false;
     }
 
-    // Interchurch Activities (leadChurchId field controls admin)
-    match /interchurch_activities/{activityId} {
-      allow read: if true; // public listings; app filters visibility
-      allow create, update, delete: if isSuperAdmin() || (isSignedIn() && hasRole(request.resource.data.leadChurchId, 'admin'));
-      match /{sub=**} {
-        allow read: if isSignedIn();
-        allow write: if isSuperAdmin() || (isSignedIn() && hasRole(resource.data.leadChurchId, 'admin'));
+    match /groupChats/{groupId}/messages/{messageId} {
+      function isGroupMemberPlaceholder() {
+         // In a real app, this would check if request.auth.uid is part of get(/databases/$(database)/documents/groupChats/$(groupId)).data.members
+         // For now, allowing read/create if approved and assigned to tenant for conceptual group chat.
+         return true; 
       }
+      allow read: if isSignedIn() && isApproved() && isGroupMemberPlaceholder() &&
+                     resource.data.tenantId == getUserData(request.auth.uid).tenantId;
+      allow create: if isSignedIn() && isApproved() && isGroupMemberPlaceholder() &&
+                       request.resource.data.senderId == request.auth.uid &&
+                       request.resource.data.tenantId == getUserData(request.auth.uid).tenantId &&
+                       incomingDataHasCorrectTenantId(request.resource.data.tenantId); 
+      allow update, delete: if false;
     }
 
-    // Year Program Entries (churchId field controls ownership)
-    match /year_program_entries/{entryId} {
-      allow read: if true;
-      allow create, update, delete: if isSuperAdmin() || (isSignedIn() && hasRole(request.resource.data.churchId, 'admin'));
-    }
-
-    // Domain mapping for web
-    match /domains/{host} {
-      allow read: if true; // public mapping host -> churchId
-      allow write: if isSuperAdmin();
-    }
-
-    // Superadmin ads and content
-    match /superadmin_ads/{docId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-
-    // Superadmin ledger
-    match /superadmin_ledger/{docId} {
-      allow read, write: if isSuperAdmin();
-    }
   }
 }
