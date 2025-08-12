@@ -3,10 +3,10 @@ name: Build and Deploy Flutter Web to Firebase Hosting
 on:
   pull_request:
     branches:
-      - cursor/build-church-on-app-with-all-features-1463  # Your PR branch
+      - Church-On-App-with-Cursor  # or your dev branch for PRs
   push:
     branches:
-      - Church-On-App-with-Cursor  # Your main branch to deploy live
+      - Church-On-App-with-Cursor  # your main/live branch
 
 permissions:
   contents: read
@@ -14,7 +14,7 @@ permissions:
   checks: write
 
 jobs:
-  build_and_deploy_preview:
+  build_and_preview:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
@@ -25,7 +25,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'  # Pin your Flutter version
+          flutter-version: '3.22.2'
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
@@ -41,7 +41,7 @@ jobs:
         working-directory: church_on_app
         run: flutter pub get
 
-      - name: Build Flutter Web (release)
+      - name: Build Flutter web (release)
         working-directory: church_on_app
         run: flutter build web --release
 
@@ -51,7 +51,7 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          channelId: preview  # This is the secret sauce for preview deploys
+          channelId: pr-${{ github.event.pull_request.number }}
 
   build_and_deploy_live:
     if: github.event_name == 'push'
@@ -80,7 +80,7 @@ jobs:
         working-directory: church_on_app
         run: flutter pub get
 
-      - name: Build Flutter Web (release)
+      - name: Build Flutter web (release)
         working-directory: church_on_app
         run: flutter build web --release
 
@@ -90,5 +90,3 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          # no channelId means live production deploy
-
