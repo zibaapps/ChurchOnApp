@@ -1,12 +1,12 @@
-name: Build and Deploy Flutter Web to Firebase Hosting
+name: Build and Deploy Flutter Web to Firebase Hosting (Live)
 
 on:
-  pull_request:
-    branches:
-      - Church-On-App-with-Cursor  # or your dev branch for PRs
   push:
     branches:
-      - Church-On-App-with-Cursor  # your main/live branch
+      - Church-On-App-with-Cursor  # your main or target branch
+  pull_request:
+    branches:
+      - cursor/build-church-on-app-with-all-features-1463  # your PR branch, optional
 
 permissions:
   contents: read
@@ -14,8 +14,7 @@ permissions:
   checks: write
 
 jobs:
-  build_and_preview:
-    if: github.event_name == 'pull_request'
+  build_and_deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +24,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'
+          flutter-version: '3.22.2'  # pin your Flutter version here
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
@@ -41,46 +40,7 @@ jobs:
         working-directory: church_on_app
         run: flutter pub get
 
-      - name: Build Flutter web (release)
-        working-directory: church_on_app
-        run: flutter build web --release
-
-      - name: Deploy to Firebase Hosting (Preview)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
-          projectId: church-on-app
-          channelId: pr-${{ github.event.pull_request.number }}
-
-  build_and_deploy_live:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.22.2'
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            church_on_app/.dart_tool
-          key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Get Flutter dependencies
-        working-directory: church_on_app
-        run: flutter pub get
-
-      - name: Build Flutter web (release)
+      - name: Build Flutter Web (release)
         working-directory: church_on_app
         run: flutter build web --release
 
