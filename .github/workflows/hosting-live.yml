@@ -1,4 +1,4 @@
-name: Build and Deploy Flutter Web to Firebase Hosting (Live)
+name: Deploy Flutter Web to Firebase Hosting (Live)
 
 on:
   push:
@@ -41,8 +41,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          # firebase.json is at repo root, so:
           entryPoint: .
-          # If you use a Hosting target in firebase.json/.firebaserc, set it here:
-          # target: your_target_name
           firebaseToolsVersion: latest
