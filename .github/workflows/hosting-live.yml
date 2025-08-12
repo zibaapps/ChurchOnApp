@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clean submodule remnants (optional)
+        run: rm -rf _upstream_church_on_app || true
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.2'
