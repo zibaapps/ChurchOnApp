@@ -3,10 +3,10 @@ name: Build and Deploy Flutter Web to Firebase Hosting
 on:
   push:
     branches:
-      - Church-On-App-with-Cursor  # your main branch for deploys
+      - Church-On-App-with-Cursor  # your live deployment branch
   pull_request:
     branches:
-      - cursor/build-church-on-app-with-all-features-1463
+      - cursor/build-church-on-app-with-all-features-1463  # your PR preview branch
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'  # Pin to your Flutter version
+          flutter-version: '3.22.2'  # pin your Flutter version here
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
@@ -44,10 +44,21 @@ jobs:
         working-directory: church_on_app
         run: flutter build web --release
 
-      - name: Deploy to Firebase Hosting
+      - name: Deploy to Firebase Hosting (Preview)
+        if: github.event_name == 'pull_request'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          # NOTE: No entryPoint here — deploy runs from root, finds firebase.json
+          channelId: preview  # THIS MAKES THE PREVIEW DEPLOY WORK
+          entryPoint: church_on_app
+
+      - name: Deploy to Firebase Hosting (Live)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/Church-On-App-with-Cursor'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
+          projectId: church-on-app
+          entryPoint: church_on_app
