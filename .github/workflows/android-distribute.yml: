@@ -1,0 +1,58 @@
+name: Build and Distribute Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - Church-On-App-with-Cursor
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+
+      - name: Cache Flutter deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            church_on_app/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
+          restore-keys: ${{ runner.os }}-flutter-
+
+      - name: Get packages
+        working-directory: church_on_app
+        run: flutter pub get
+
+      - name: Build APK (release)
+        working-directory: church_on_app
+        run: flutter build apk --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: church_on_app/build/app/outputs/flutter-apk/app-release.apk
+
+  distribute:
+    needs: build_apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release-apk
+          path: dist
+
+      - name: Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          token: ${{ secrets.FIREBASE_TOKEN }}
+          groups: testers
+          file: dist/app-release.apk
+          releaseNotes: "Automated build from ${{ github.sha }}"
