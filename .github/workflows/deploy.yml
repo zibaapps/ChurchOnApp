@@ -1,12 +1,12 @@
-name: Build and Deploy Flutter Web to Firebase Hosting (Live)
+name: Build and Deploy Flutter Web to Firebase Hosting
 
 on:
-  push:
-    branches:
-      - Church-On-App-with-Cursor  # your main or target branch
   pull_request:
     branches:
-      - cursor/build-church-on-app-with-all-features-1463  # your PR branch, optional
+      - Church-On-App-with-Cursor
+  push:
+    branches:
+      - Church-On-App-with-Cursor
 
 permissions:
   contents: read
@@ -14,33 +14,71 @@ permissions:
   checks: write
 
 jobs:
-  build_and_deploy:
+  build_and_preview:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'  # pin your Flutter version here
+          flutter-version: '3.22.2'
 
-      - name: Cache Flutter dependencies
+      - name: Cache Flutter deps
         uses: actions/cache@v3
         with:
           path: |
             ~/.pub-cache
             church_on_app/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
+          restore-keys: ${{ runner.os }}-flutter-
 
-      - name: Get Flutter dependencies
+      - name: Get packages
         working-directory: church_on_app
         run: flutter pub get
 
-      - name: Build Flutter Web (release)
+      - name: Build web (release)
+        working-directory: church_on_app
+        run: flutter build web --release
+
+      - name: Deploy to Firebase Hosting (Preview)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
+          projectId: church-on-app
+          # IMPORTANT: these two fix the "channelID is currently required" and ensure the right firebase.json is used
+          channelId: pr-${{ github.event.pull_request.number }}
+          entryPoint: church_on_app
+          # Optional but recommended if you have multiple sites/targets:
+          site: church-on-app
+          # expires defaults to 7d; set explicitly if you want:
+          expires: 7d
+
+  build_and_deploy_live:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+
+      - name: Cache Flutter deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            church_on_app/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
+          restore-keys: ${{ runner.os }}-flutter-
+
+      - name: Get packages
+        working-directory: church_on_app
+        run: flutter pub get
+
+      - name: Build web (release)
         working-directory: church_on_app
         run: flutter build web --release
 
@@ -50,3 +88,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
+          entryPoint: church_on_app
+          site: church-on-app
