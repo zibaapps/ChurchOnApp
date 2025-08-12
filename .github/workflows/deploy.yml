@@ -1,12 +1,12 @@
-name: Build and Deploy Flutter Web to Firebase Hosting
+name: Flutter Web Build and Deploy
 
 on:
-  push:
-    branches:
-      - Church-On-App-with-Cursor  # your live deployment branch
   pull_request:
     branches:
-      - cursor/build-church-on-app-with-all-features-1463  # your PR preview branch
+      - '**'  # All PR branches
+  push:
+    branches:
+      - Church-On-App-with-Cursor
 
 permissions:
   contents: read
@@ -14,7 +14,9 @@ permissions:
   checks: write
 
 jobs:
-  build_and_deploy:
+
+  preview_deploy:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +26,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'  # pin your Flutter version here
+          flutter-version: '3.22.2'
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
@@ -44,21 +46,48 @@ jobs:
         working-directory: church_on_app
         run: flutter build web --release
 
-      - name: Deploy to Firebase Hosting (Preview)
-        if: github.event_name == 'pull_request'
+      - name: Deploy to Firebase Hosting Preview Channel
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          channelId: preview  # THIS MAKES THE PREVIEW DEPLOY WORK
-          entryPoint: church_on_app
+          channelId: pr-${{ github.event.number }}
+
+  live_deploy:
+    if: github.event_name == 'push' && contains(github.ref, 'Church-On-App-with-Cursor')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            church_on_app/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('church_on_app/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get Flutter dependencies
+        working-directory: church_on_app
+        run: flutter pub get
+
+      - name: Build Flutter Web (release)
+        working-directory: church_on_app
+        run: flutter build web --release
 
       - name: Deploy to Firebase Hosting (Live)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/Church-On-App-with-Cursor'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          entryPoint: church_on_app
