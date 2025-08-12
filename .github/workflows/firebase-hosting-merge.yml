@@ -3,10 +3,10 @@ name: Build and Deploy Flutter Web to Firebase Hosting
 on:
   push:
     branches:
-      - Church-On-App-with-Cursor  # or your target branch
+      - Church-On-App-with-Cursor  # Your target branch for deployment
   pull_request:
     branches:
-      - cursor/build-church-on-app-with-all-features-1463
+      - cursor/build-church-on-app-with-all-features-1463  # Your PR branch
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'  # Pin this to your Flutter version
+          flutter-version: '3.22.2'  # Pin to your Flutter version
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v3
@@ -50,4 +50,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHURCH_ON_APP }}
           projectId: church-on-app
-          entryPoint: church_on_app  # <-- This points the deploy action to your firebase.json location
+          entryPoint: church_on_app  # This points the deploy action to your firebase.json location
